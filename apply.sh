@@ -24,6 +24,10 @@ apply "frameworks/base" \
     "SettingsLib-fix-brightness-slider-curve-for-some-devices.patch" \
     "javac-bump-shard_size-to-100000.patch"
 
+apply_msg "🔐 Keystore patch"
+apply "hardware/libhardware" "hardware_libhardware/include-keystore-hackup.patch"
+apply "system/security" "system_security/keystore2-keystore-hackup.patch"
+
 apply_msg "🌐 NETD support for legacy devices"
 apply "system/netd" \
     "Revert-eliminate-TrafficController-s-mBpfEnabled-friends.patch" \
