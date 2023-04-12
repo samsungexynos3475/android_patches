@@ -12,6 +12,10 @@ apply "system/core" "system_core/Camera-Add-feature-extensions.patch"
 apply_msg "⚙️ Frameworks patch for legacy devices"
 apply "frameworks/base" "https://github.com/samsungexynos3475/android_frameworks_base/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
 
+apply_msg "🔐 Keystore patch"
+apply "hardware/libhardware" "hardware_libhardware/include-keystore-hackup.patch"
+apply "system/security" "system_security/keystore2-keystore-hackup.patch"
+
 apply_msg "🌐 NETD support for legacy devices"
 apply "system/netd" "https://github.com/samsungexynos3475/android_system_netd/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
 
