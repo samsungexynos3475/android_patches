@@ -6,6 +6,9 @@ apply "hardware/samsung" "samsung-audio-Implement-auto-fade-in-to-suppress-Audio
 apply_msg "🔵 Bluetooth SCO I2S routing"
 apply "system/bt" "btm-fix-SCO-I2S-routing.patch"
 
+apply_msg "🔵 Bluetooth revert WBS by default"
+apply "system/bt" "Revert-Bluetooth-HFP-Use-WBS-by-default-1-5.patch"
+
 apply_msg "⚙️ BPF support for legacy devices"
 apply "system/bpf" \
     "bpf-bring-back-isBpfSupported-method-but-using-ro.kernel.ebpf.supported.patch" \
