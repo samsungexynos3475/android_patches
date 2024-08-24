@@ -3,8 +3,10 @@
 apply_msg "🎵 Audio blast fix"
 apply "hardware/samsung" "samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch"
 
-apply_msg "🔵 Bluetooth SCO I2S routing"
-apply "system/bt" "btm-fix-SCO-I2S-routing.patch"
+apply_msg "🔵 Bluetooth revert WBS by default && SCO I2S routing"
+apply "system/bt" \
+    "btm-fix-SCO-I2S-routing.patch" \
+    "Revert-Bluetooth-HFP-Use-WBS-by-default-1-5.patch"
 
 apply_msg "⚙️ BPF support for legacy devices"
 apply "system/bpf" \
