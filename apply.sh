@@ -6,6 +6,9 @@ apply "hardware/samsung" "https://raw.githubusercontent.com/samsungexynos3475/an
 apply_msg "🔵 Bluetooth SCO I2S routing"
 apply "system/bt" "system_bt/btm-fix-SCO-I2S-routing.patch"
 
+apply_msg "🔵 Bluetooth revert WBS by default"
+apply "system/bt" "system_bt/Revert-Bluetooth-HFP-Use-WBS-by-default-1-5.patch"
+
 apply_msg "⚙️ BPF support for legacy devices"
 apply "system/bpf" "https://github.com/LineageOS/android_system_bpf/compare/lineage-23.2...samsungexynos3475:android_system_bpf:lineage-19.1.patch"
 
