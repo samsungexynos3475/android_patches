@@ -1,0 +1,118 @@
+From ba4d5870542bc49854e52f505e284f838543fe28 Mon Sep 17 00:00:00 2001
+From: Francescodario Cuzzocrea <bosconovic@gmail.com>
+Date: Tue, 23 Jun 2026 17:36:18 -0700
+Subject: [PATCH] sepolicy: add hal_lineage_batterylifeextender
+
+Change-Id: Ic0d289c2576e0e8f5a9085c8b225c5401a9e55aa
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ common/dynamic/hal_lineage_batterylifeextender.te        | 8 ++++++++
+ common/dynamic/hwservice.te                              | 1 +
+ common/dynamic/hwservice_contexts                        | 1 +
+ common/private/platform_app.te                           | 3 +++
+ common/private/system_app.te                             | 1 +
+ common/private/system_server.te                          | 1 +
+ common/public/attributes                                 | 1 +
+ common/vendor/hal_lineage_batterylifeextender_default.te | 5 +++++
+ 8 files changed, 21 insertions(+)
+ create mode 100644 common/dynamic/hal_lineage_batterylifeextender.te
+ create mode 100644 common/vendor/hal_lineage_batterylifeextender_default.te
+
+diff --git a/common/dynamic/hal_lineage_batterylifeextender.te b/common/dynamic/hal_lineage_batterylifeextender.te
+new file mode 100644
+index 0000000..a52bca4
+--- /dev/null
++++ b/common/dynamic/hal_lineage_batterylifeextender.te
+@@ -0,0 +1,8 @@
++# HWBinder IPC from client to server
++binder_call(hal_lineage_batterylifeextender_client, hal_lineage_batterylifeextender_server)
++
++add_hwservice(hal_lineage_batterylifeextender_server, hal_lineage_batterylifeextender_hwservice)
++allow hal_lineage_batterylifeextender_client hal_lineage_batterylifeextender_hwservice:hwservice_manager find;
++
++# Allow binder communication with platform_app
++binder_call(hal_lineage_batterylifeextender, platform_app)
+diff --git a/common/dynamic/hwservice.te b/common/dynamic/hwservice.te
+index c07220f..2096a6e 100644
+--- a/common/dynamic/hwservice.te
++++ b/common/dynamic/hwservice.te
+@@ -1,3 +1,4 @@
++type hal_lineage_batterylifeextender_hwservice, hwservice_manager_type;
+ type hal_lineage_camera_motor_hwservice, hwservice_manager_type;
+ type hal_lineage_fastcharge_hwservice, hwservice_manager_type;
+ type hal_lineage_fod_hwservice, hwservice_manager_type;
+diff --git a/common/dynamic/hwservice_contexts b/common/dynamic/hwservice_contexts
+index b0206e1..ec6edf6 100644
+--- a/common/dynamic/hwservice_contexts
++++ b/common/dynamic/hwservice_contexts
+@@ -1,6 +1,7 @@
+ motorola.hardware.health::IMotHealth                                    u:object_r:hal_health_hwservice:s0
+ vendor.lineage.biometrics.fingerprint.inscreen::IFingerprintInscreen    u:object_r:hal_lineage_fod_hwservice:s0
+ vendor.lineage.camera.motor::ICameraMotor                               u:object_r:hal_lineage_camera_motor_hwservice:s0
++vendor.lineage.batterylifeextender::IBatteryLifeExtender                u:object_r:hal_lineage_batterylifeextender_hwservice:s0
+ vendor.lineage.fastcharge::IFastCharge                                  u:object_r:hal_lineage_fastcharge_hwservice:s0
+ vendor.lineage.livedisplay::IAdaptiveBacklight                          u:object_r:hal_lineage_livedisplay_hwservice:s0
+ vendor.lineage.livedisplay::IAntiFlicker                                u:object_r:hal_lineage_livedisplay_hwservice:s0
+diff --git a/common/private/platform_app.te b/common/private/platform_app.te
+index c6ecd1e..93f6ae6 100644
+--- a/common/private/platform_app.te
++++ b/common/private/platform_app.te
+@@ -1,6 +1,9 @@
+ # Allow NFC service to be found
+ allow platform_app nfc_service:service_manager find;
+ 
++# Allow BatteryLifeExtender HAL service to be found
++hal_client_domain(platform_app, hal_lineage_batterylifeextender)
++
+ # Allow FastCharge HAL service to be found
+ hal_client_domain(platform_app, hal_lineage_fastcharge)
+ 
+diff --git a/common/private/system_app.te b/common/private/system_app.te
+index c4fe514..c92cd51 100644
+--- a/common/private/system_app.te
++++ b/common/private/system_app.te
+@@ -2,6 +2,7 @@
+ get_prop(system_app, vendor_security_patch_level_prop)
+ 
+ # Allow access to the HALs
++hal_client_domain(system_app, hal_lineage_batterylifeextender)
+ hal_client_domain(system_app, hal_lineage_fastcharge)
+ hal_client_domain(system_app, hal_lineage_livedisplay)
+ hal_client_domain(system_app, hal_lineage_touch)
+diff --git a/common/private/system_server.te b/common/private/system_server.te
+index 4fe1d72..295ed15 100644
+--- a/common/private/system_server.te
++++ b/common/private/system_server.te
+@@ -3,6 +3,7 @@ allow system_server storage_stub_file:dir getattr;
+ allow system_server adbroot_service:service_manager find;
+ 
+ # Use HALs
++hal_client_domain(system_server, hal_lineage_batterylifeextender)
+ hal_client_domain(system_server, hal_lineage_fastcharge)
+ hal_client_domain(system_server, hal_lineage_fod)
+ hal_client_domain(system_server, hal_lineage_livedisplay)
+diff --git a/common/public/attributes b/common/public/attributes
+index 2eae931..1d8eff9 100644
+--- a/common/public/attributes
++++ b/common/public/attributes
+@@ -1,5 +1,6 @@
+ # HALs
+ hal_attribute_lineage(lineage_camera_motor)
++hal_attribute_lineage(lineage_batterylifeextender)
+ hal_attribute_lineage(lineage_fastcharge)
+ hal_attribute_lineage(lineage_fod)
+ hal_attribute_lineage(lineage_livedisplay)
+diff --git a/common/vendor/hal_lineage_batterylifeextender_default.te b/common/vendor/hal_lineage_batterylifeextender_default.te
+new file mode 100644
+index 0000000..6d97078
+--- /dev/null
++++ b/common/vendor/hal_lineage_batterylifeextender_default.te
+@@ -0,0 +1,5 @@
++type hal_lineage_batterylifeextender_default, domain;
++hal_server_domain(hal_lineage_batterylifeextender_default, hal_lineage_batterylifeextender)
++
++type hal_lineage_batterylifeextender_default_exec, exec_type, vendor_file_type, file_type;
++init_daemon_domain(hal_lineage_batterylifeextender_default)
+-- 
+2.43.0
+

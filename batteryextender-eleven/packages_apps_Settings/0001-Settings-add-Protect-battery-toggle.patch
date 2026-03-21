@@ -1,0 +1,152 @@
+From e3ced8c7a5b0581450c3b017167f12acb7fdc358 Mon Sep 17 00:00:00 2001
+From: Francescodario Cuzzocrea <bosconovic@gmail.com>
+Date: Tue, 23 Jun 2026 17:31:05 -0700
+Subject: [PATCH] Settings: add Protect battery toggle
+
+Change-Id: I5160d59efcdb16e547debc7dad49085a9604de41
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ Android.bp                                    |  1 +
+ res/values/cm_strings.xml                     |  4 +
+ res/xml/power_usage_summary.xml               |  6 ++
+ ...tteryLifeExtenderPreferenceController.java | 84 +++++++++++++++++++
+ 4 files changed, 95 insertions(+)
+ create mode 100644 src/com/android/settings/fuelgauge/BatteryLifeExtenderPreferenceController.java
+
+diff --git a/Android.bp b/Android.bp
+index aac82c695a..333b236641 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -56,6 +56,7 @@ android_library {
+         "android.hardware.dumpstate-V1.0-java",
+         "android.hardware.dumpstate-V1.1-java",
+         "org.lineageos.platform.internal",
++        "vendor.lineage.batterylifeextender-V1.0-java",
+         "vendor.lineage.fastcharge-V1.0-java",
+     ],
+ 
+diff --git a/res/values/cm_strings.xml b/res/values/cm_strings.xml
+index e2a63fbb4c..f415e23aa5 100644
+--- a/res/values/cm_strings.xml
++++ b/res/values/cm_strings.xml
+@@ -174,6 +174,10 @@
+ 
+     <!-- Used in SetupWizard Wi-Fi network selection page [CHAR LIMIT=60] -->
+     <string name="wifi_setup_wizard_title">Select Wi\u2011Fi network</string>
++	
++	<!-- BatteryLifeExtender feature -->
++    <string name="battery_life_extender_title">Protect battery</string>
++    <string name="battery_life_extender_summary">To extend the lifespan of your battery, limit the maximum charge capacity level</string>
+ 
+     <!-- Configure notifications: Title for advanced notification settings pane -->
+     <string name="advanced_notifications_title">Advanced notification settings</string>
+diff --git a/res/xml/power_usage_summary.xml b/res/xml/power_usage_summary.xml
+index 4d29ec128e..cfc72786d3 100644
+--- a/res/xml/power_usage_summary.xml
++++ b/res/xml/power_usage_summary.xml
+@@ -63,6 +63,12 @@
+         android:summary="@string/battery_percentage_description"
+         settings:controller="com.android.settings.display.BatteryPercentagePreferenceController" />
+ 
++    <SwitchPreference
++        android:key="battery_life_extender"
++        android:title="@string/battery_life_extender_title"
++        android:summary="@string/battery_life_extender_summary"
++        settings:controller="com.android.settings.fuelgauge.BatteryLifeExtenderPreferenceController"/>
++
+     <SwitchPreference
+         android:key="fast_charging"
+         android:title="@string/fast_charging_title"
+diff --git a/src/com/android/settings/fuelgauge/BatteryLifeExtenderPreferenceController.java b/src/com/android/settings/fuelgauge/BatteryLifeExtenderPreferenceController.java
+new file mode 100644
+index 0000000000..38fd61055f
+--- /dev/null
++++ b/src/com/android/settings/fuelgauge/BatteryLifeExtenderPreferenceController.java
+@@ -0,0 +1,84 @@
++/*
++ * Copyright (C) 2021 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.fuelgauge;
++
++import android.content.Context;
++import android.os.RemoteException;
++import android.util.Log;
++
++import androidx.preference.Preference;
++import androidx.preference.SwitchPreference;
++
++import com.android.settings.core.BasePreferenceController;
++
++import vendor.lineage.batterylifeextender.V1_0.IBatteryLifeExtender;
++
++import java.util.NoSuchElementException;
++
++/**
++ * Controller to change and update the battery life extender toggle
++ */
++public class BatteryLifeExtenderPreferenceController extends BasePreferenceController
++        implements Preference.OnPreferenceChangeListener {
++
++    private static final String KEY_BATTERY_LIFE_EXTENDER = "battery_life_extender";
++    private static final String TAG = "BatteryLifeExtenderPreferenceController";
++
++    private IBatteryLifeExtender mBatteryLifeExtender = null;
++
++    public BatteryLifeExtenderPreferenceController(Context context) {
++        super(context, KEY_BATTERY_LIFE_EXTENDER);
++        try {
++            mBatteryLifeExtender = IBatteryLifeExtender.getService();
++        } catch (NoSuchElementException | RemoteException e) {
++            Log.e(TAG, "Failed to get IBatteryLifeExtender interface", e);
++        }
++    }
++
++    @Override
++    public int getAvailabilityStatus() {
++        return mBatteryLifeExtender != null ? AVAILABLE : UNSUPPORTED_ON_DEVICE;
++    }
++
++    @Override
++    public void updateState(Preference preference) {
++        super.updateState(preference);
++        boolean batteryLifeExtenderEnabled = false;
++
++        try {
++            batteryLifeExtenderEnabled = mBatteryLifeExtender.isEnabled();
++        } catch (RemoteException e) {
++            Log.e(TAG, "isEnabled failed", e);
++        }
++
++        ((SwitchPreference) preference).setChecked(batteryLifeExtenderEnabled);
++    }
++
++    @Override
++    public boolean onPreferenceChange(Preference preference, Object newValue) {
++        final boolean shouldEnableBatteryLifeExtender = (Boolean) newValue;
++
++        try {
++            mBatteryLifeExtender.setEnabled(shouldEnableBatteryLifeExtender);
++            updateState(preference);
++        } catch (RemoteException e) {
++            Log.e(TAG, "setEnabled failed", e);
++        }
++
++        return false;
++    }
++}
+-- 
+2.43.0
+

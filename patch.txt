@@ -1,3 +1,6 @@
+# --- LineageOS/android_device_lineage_sepolicy ---
+"device/lineage/sepolicy" "🔋" "Battery Extender sepolicy" "../batteryextender-eleven/device_lineage_sepolicy/0001-sepolicy-add-hal_lineage_batterylifeextender.patch"
+
 # --- LineageOS/android_frameworks_av ---
 "frameworks/av" "🎥" "cameraserver: relax VideoNativeHandleMetadata size validation" "0001-cameraserver-relax-VideoNativeHandleMetadata-size-validation-for-legacy-HALs.patch"
 
@@ -11,12 +14,18 @@
 "hardware/interfaces" "📷" "Camera" "0001-camera-relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch"
 
 # --- LineageOS/android_hardware_lineage_interfaces ---
-"hardware/lineage/interfaces" "📷" "Camera" "0001-interfaces-camera-relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch"
+"hardware/lineage/interfaces" \
+  "📷" "Camera" "0001-interfaces-camera-relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch" \
+  "🔋" "Battery Extender HAL" "../batteryextender-eleven/hardware_lineage_interfaces/0001-lineage-interfaces-add-batterylifeextender-HAL.patch"
 
 # --- LineageOS/android_hardware_samsung ---
 "hardware/samsung" \
   "💡" "Light HAL" "0001-hidl-light-cache-max_brightness-during-initialization.patch" \
-  "🎵" "BT SCO routing" "0002-samsung-audio-Restore-BT-SCO-VoIP-and-Cellular-routing.patch"
+  "🎵" "BT SCO routing" "0002-samsung-audio-Restore-BT-SCO-VoIP-and-Cellular-routing.patch" \
+  "🔋" "Battery Extender impl" "../batteryextender-eleven/hardware_samsung/0001-hidl-add-batterylifeextender-implementation.patch"
+
+# --- LineageOS/android_packages_apps_Settings ---
+"packages/apps/Settings" "🔋" "Protect battery toggle" "../batteryextender-eleven/packages_apps_Settings/0001-Settings-add-Protect-battery-toggle.patch"
 
 # --- LineageOS/android_system_bt ---
 "system/bt" "🔵" "system_bt" "0001-btm-fix-SCO-I2S-routing-for-Android-10.patch"

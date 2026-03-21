@@ -44,3 +44,24 @@ This branch contains custom hardware patches for LineageOS 18.1 on Exynos 3475 d
 * **Filename**: `system_bt/0001-btm-fix-SCO-I2S-routing-for-Android-10.patch`
 * **Details**: Manually injects Broadcom vendor-specific commands for configuring the SCO I2S interface (Master role, 256KHz clock, short sync) during connection request initialization, replacing the `BT_VND_OP_SET_AUDIO_STATE` operation removed in Android 10.
 
+### 9. Battery Extender SELinux Policy (Sepolicy)
+* **Target Path**: `device/lineage/sepolicy`
+* **Filename**: `batteryextender-eleven/device_lineage_sepolicy/0001-sepolicy-add-hal_lineage_batterylifeextender.patch`
+* **Details**: Adds necessary SELinux policy rules (`hal_lineage_batterylifeextender` client/server attributes, permissions for system apps and settings to call the service) to authorize Binder IPC for the Battery Life Extender HAL.
+
+### 10. Battery Extender HIDL Interface Definition
+* **Target Path**: `hardware/lineage/interfaces`
+* **Filename**: `batteryextender-eleven/hardware_lineage_interfaces/0001-lineage-interfaces-add-batterylifeextender-HAL.patch`
+* **Details**: Defines the `vendor.lineage.batterylifeextender@1.0` HIDL interface (`IBatteryLifeExtender.hal` with `isEnabled` and `setEnabled` methods) in LineageOS interfaces.
+
+### 11. Battery Extender Samsung HAL Implementation
+* **Target Path**: `hardware/samsung`
+* **Filename**: `batteryextender-eleven/hardware_samsung/0001-hidl-add-batterylifeextender-implementation.patch`
+* **Details**: Implements the `IBatteryLifeExtender` service for Samsung devices, reading/writing values to the `/sys/class/power_supply/battery/store_mode` sysfs node and managing permissions and vendor properties accordingly.
+
+### 12. Battery Extender Settings Toggle UI
+* **Target Path**: `packages/apps/Settings`
+* **Filename**: `batteryextender-eleven/packages_apps_Settings/0001-Settings-add-Protect-battery-toggle.patch`
+* **Details**: Adds a "Protect battery" toggle switch to the Settings application under the Battery usage summary page, linked to the `BatteryLifeExtenderPreferenceController` which interfaces with the `IBatteryLifeExtender` HIDL service.
+
+
