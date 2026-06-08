@@ -1,0 +1,54 @@
+From 0cf445e97513dccaeab78b2c37d4e10143132c20 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Tue, 9 Jun 2026 04:12:51 -0700
+Subject: [PATCH] UnifiedEmail: Replace incompatible bitmap drawables
+
+On API 21+ (such as our target Android 10 build), the vector drawables
+@drawable/ic_next_24dp are used. However, the UnifiedEmail resource
+definitions ic_next.xml and ic_prev.xml wrapped them inside <bitmap>
+tags.
+
+Wrapping vector drawables in <bitmap> tags throws a runtime
+InflateException due to XmlPullParserException: "Binary XML file line
+#19: <bitmap> requires a valid 'src' attribute" when inflating the
+account setup navigation layouts, crashing the Email app instantly.
+
+Replace the <bitmap> wrapping tags with compatibility-safe
+<layer-list> tags to prevent the inflation crash.
+
+Change-Id: I465846521a04ef677a1445bb8d310f4ac85fd8e5
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ res/drawable-ldrtl/ic_prev.xml | 5 +++--
+ res/drawable/ic_next.xml       | 5 +++--
+ 2 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/res/drawable-ldrtl/ic_prev.xml b/res/drawable-ldrtl/ic_prev.xml
+index 34586dd..4b9b43d 100644
+--- a/res/drawable-ldrtl/ic_prev.xml
++++ b/res/drawable-ldrtl/ic_prev.xml
+@@ -16,5 +16,6 @@
+      limitations under the License.
+ -->
+ 
+-<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:src="@drawable/ic_next_24dp" />
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:drawable="@drawable/ic_next_24dp" />
++</layer-list>
+diff --git a/res/drawable/ic_next.xml b/res/drawable/ic_next.xml
+index 34586dd..4b9b43d 100644
+--- a/res/drawable/ic_next.xml
++++ b/res/drawable/ic_next.xml
+@@ -16,5 +16,6 @@
+      limitations under the License.
+ -->
+ 
+-<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:src="@drawable/ic_next_24dp" />
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:drawable="@drawable/ic_next_24dp" />
++</layer-list>
+-- 
+2.43.0
+
