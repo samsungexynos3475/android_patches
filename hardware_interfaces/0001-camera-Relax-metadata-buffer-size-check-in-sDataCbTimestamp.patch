@@ -1,0 +1,42 @@
+From 68ec91ac72a7cd5535a345174c0ea37304ce1bbe Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Sat, 6 Jun 2026 18:16:05 -0700
+Subject: [PATCH] camera: Relax metadata buffer size check in sDataCbTimestamp
+
+Relax the strict equality check (`==`) to a greater-than-or-equal-to check
+(`>=`) on `mem->mBufSize` when validating metadata buffers.
+
+Legacy vendor camera HALs (such as Exynos 3475) operate strictly in metadata
+recording mode but return custom metadata structure layouts (e.g., 20-byte
+payloads containing indices and original file descriptors).
+
+On 32-bit platforms, standard `VideoNativeHandleMetadata` is 8 bytes. The
+previous strict size equality check caused the camera HIDL device service
+callback to reject custom vendor native handles, falling back to raw YUV
+callbacks that resulted in recording deadlocks and green video color casts.
+Allowing larger buffers lets custom metadata payloads pass through to the
+translated frame handler safely.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.5 Flash (High)
+
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ camera/device/1.0/default/CameraDevice.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/camera/device/1.0/default/CameraDevice.cpp b/camera/device/1.0/default/CameraDevice.cpp
+index a1f1830fd9..2ab9d0d492 100644
+--- a/camera/device/1.0/default/CameraDevice.cpp
++++ b/camera/device/1.0/default/CameraDevice.cpp
+@@ -546,7 +546,7 @@ void CameraDevice::sDataCbTimestamp(nsecs_t timestamp, int32_t msg_type,
+ 
+     native_handle_t* handle = nullptr;
+     if (object->mMetadataMode) {
+-        if (mem->mBufSize == sizeof(VideoNativeHandleMetadata)) {
++        if (mem->mBufSize >= sizeof(VideoNativeHandleMetadata)) {
+             VideoNativeHandleMetadata* md = (VideoNativeHandleMetadata*)
+                     ((uint8_t*) mem->mHidlHeapMemData + index * mem->mBufSize);
+             if (md->eType == kMetadataBufferTypeNativeHandleSource) {
+-- 
+2.43.0
+

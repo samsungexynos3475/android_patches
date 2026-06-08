@@ -1,0 +1,144 @@
+From 26232c4b4ee3909284b478f2a9354e320aefed10 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Sat, 6 Jun 2026 18:25:29 -0700
+Subject: [PATCH] Camera/stagefright: Resolve video recording freezes and color
+ casts
+
+Implement a combined fix for the Snap camera app video recording stop freeze
+and green color cast issues on devices utilizing legacy camera HAL wrappers:
+
+1. libcameraservice: Relax client metadata buffer size validations
+   - In api1/CameraClient and device1/CameraHardwareInterface, change strict
+     size validations on incoming camera callback buffers from strict equality
+     checks (`!=` / `== sizeof(VideoNativeHandleMetadata)`) to relational checks
+     (`<` / `>=`).
+   - This prevents the framework from dropping 20-byte legacy metadata buffers
+     coming from custom HAL wrappers (containing indices and original FDs) and
+     allows them to pass validation cleanly in metadata recording mode.
+
+2. libstagefright: Prevent deadlocks during recording stop
+   - In CameraSource::read(), return `ERROR_END_OF_STREAM` if the timeout guard
+     waiting for incoming camera video frames (3 seconds) is tripped.
+   - This ensures the video encoder and MPEG4Writer threads exit gracefully and
+     break the read loop when the camera stop call is invoked, preventing system
+     freezes and cameraserver deadlocks.
+
+3. libstagefright: Correct color format configuration
+   - In MediaCodecSource::initEncoder(), query and apply the color-format directly
+     from the input/output format parameters when in metadata mode.
+   - This prevents falling back to incompatible layouts, resolving the green
+     video color cast.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.5 Flash (High)
+
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ media/libstagefright/CameraSource.cpp                |  1 +
+ media/libstagefright/MediaCodecSource.cpp            | 11 ++++++++++-
+ .../camera/libcameraservice/api1/CameraClient.cpp    | 12 ++++++------
+ .../device1/CameraHardwareInterface.cpp              |  4 ++--
+ 4 files changed, 19 insertions(+), 9 deletions(-)
+
+diff --git a/media/libstagefright/CameraSource.cpp b/media/libstagefright/CameraSource.cpp
+index 3bca728d3d..02e2757bf6 100644
+--- a/media/libstagefright/CameraSource.cpp
++++ b/media/libstagefright/CameraSource.cpp
+@@ -1104,6 +1104,7 @@ status_t CameraSource::read(
+                 }
+                 ALOGW("Timed out waiting for incoming camera video frames: %" PRId64 " us",
+                     mLastFrameTimestampUs);
++                return ERROR_END_OF_STREAM;
+             }
+         }
+         if (!mStarted) {
+diff --git a/media/libstagefright/MediaCodecSource.cpp b/media/libstagefright/MediaCodecSource.cpp
+index 50e454cb52..763333824f 100644
+--- a/media/libstagefright/MediaCodecSource.cpp
++++ b/media/libstagefright/MediaCodecSource.cpp
+@@ -576,7 +576,16 @@ status_t MediaCodecSource::initEncoder() {
+     mSetEncoderFormat = false;
+     if (mEncoder->getInputFormat(&inputFormat) == OK) {
+         mSetEncoderFormat = true;
+-        if (inputFormat->findInt32("using-sw-read-often", &usingSwReadOften)
++        if (!(mFlags & FLAG_USE_SURFACE_INPUT)) {
++            int32_t colorFormat;
++            if (inputFormat->findInt32("color-format", &colorFormat)) {
++                mEncoderFormat = colorFormat;
++            } else if (mOutputFormat->findInt32("color-format", &colorFormat)) {
++                mEncoderFormat = colorFormat;
++            } else {
++                mEncoderFormat = OMX_COLOR_FormatYUV420SemiPlanar;
++            }
++        } else if (inputFormat->findInt32("using-sw-read-often", &usingSwReadOften)
+                 && usingSwReadOften) {
+             // this is a SW encoder; signal source to allocate SW readable buffers
+             mEncoderFormat = kDefaultSwVideoEncoderFormat;
+diff --git a/services/camera/libcameraservice/api1/CameraClient.cpp b/services/camera/libcameraservice/api1/CameraClient.cpp
+index 40c8e19413..3b4cc9e969 100644
+--- a/services/camera/libcameraservice/api1/CameraClient.cpp
++++ b/services/camera/libcameraservice/api1/CameraClient.cpp
+@@ -528,8 +528,8 @@ void CameraClient::releaseRecordingFrameHandle(native_handle_t *handle) {
+         native_handle_close(handle);
+         native_handle_delete(handle);
+         return;
+-    } else if (dataPtr->size() != sizeof(VideoNativeHandleMetadata)) {
+-        ALOGE("%s: %d: Callback buffer size doesn't match VideoNativeHandleMetadata", __FUNCTION__,
++    } else if (dataPtr->size() < sizeof(VideoNativeHandleMetadata)) {
++        ALOGE("%s: %d: Callback buffer size is less than VideoNativeHandleMetadata", __FUNCTION__,
+                 __LINE__);
+         native_handle_close(handle);
+         native_handle_delete(handle);
+@@ -568,8 +568,8 @@ void CameraClient::releaseRecordingFrameHandleBatch(const std::vector<native_han
+                     __LINE__);
+             error = true;
+             break;
+-        } else if (dataPtr->size() != sizeof(VideoNativeHandleMetadata)) {
+-            ALOGE("%s: %d: Callback buffer must be VideoNativeHandleMetadata", __FUNCTION__,
++        } else if (dataPtr->size() < sizeof(VideoNativeHandleMetadata)) {
++            ALOGE("%s: %d: Callback buffer must be at least VideoNativeHandleMetadata", __FUNCTION__,
+                     __LINE__);
+             error = true;
+             break;
+@@ -933,7 +933,7 @@ void CameraClient::handleCallbackTimestampBatch(
+         handles.reserve(n);
+         for (auto& msg : msgs) {
+             native_handle_t* handle = nullptr;
+-            if (msg.dataPtr->size() != sizeof(VideoNativeHandleMetadata)) {
++            if (msg.dataPtr->size() < sizeof(VideoNativeHandleMetadata)) {
+                 ALOGE("%s: dataPtr does not contain VideoNativeHandleMetadata!", __FUNCTION__);
+                 return;
+             }
+@@ -1101,7 +1101,7 @@ void CameraClient::handleGenericDataTimestamp(nsecs_t timestamp,
+         native_handle_t* handle = nullptr;
+ 
+         // Check if dataPtr contains a VideoNativeHandleMetadata.
+-        if (dataPtr->size() == sizeof(VideoNativeHandleMetadata)) {
++        if (dataPtr->size() >= sizeof(VideoNativeHandleMetadata)) {
+             VideoNativeHandleMetadata *metadata =
+                 (VideoNativeHandleMetadata*)(dataPtr->pointer());
+             if (metadata->eType == kMetadataBufferTypeNativeHandleSource) {
+diff --git a/services/camera/libcameraservice/device1/CameraHardwareInterface.cpp b/services/camera/libcameraservice/device1/CameraHardwareInterface.cpp
+index 498485430e..52f4124f58 100644
+--- a/services/camera/libcameraservice/device1/CameraHardwareInterface.cpp
++++ b/services/camera/libcameraservice/device1/CameraHardwareInterface.cpp
+@@ -598,7 +598,7 @@ void CameraHardwareInterface::releaseRecordingFrame(const sp<IMemory>& mem)
+     int heapId = heap->getHeapID();
+     int bufferIndex = offset / size;
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+-        if (size == sizeof(VideoNativeHandleMetadata)) {
++        if (size >= sizeof(VideoNativeHandleMetadata)) {
+             VideoNativeHandleMetadata* md = (VideoNativeHandleMetadata*) mem->pointer();
+             if (md->eType == kMetadataBufferTypeNativeHandleSource) {
+                 // Caching the handle here because md->pHandle will be subject to HAL's edit
+@@ -627,7 +627,7 @@ void CameraHardwareInterface::releaseRecordingFrameBatch(const std::vector<sp<IM
+             ssize_t offset;
+             size_t size;
+             sp<IMemoryHeap> heap = mem->getMemory(&offset, &size);
+-            if (size == sizeof(VideoNativeHandleMetadata)) {
++            if (size >= sizeof(VideoNativeHandleMetadata)) {
+                 uint32_t heapId = heap->getHeapID();
+                 uint32_t bufferIndex = offset / size;
+                 VideoNativeHandleMetadata* md = (VideoNativeHandleMetadata*) mem->pointer();
+-- 
+2.43.0
+
