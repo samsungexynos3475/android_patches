@@ -83,6 +83,16 @@ if test -f "build/envsetup.sh"; then
         cd packages/apps/Bluetooth && \
         git am -s < <(curl -sf "$REPO_URL/packages_apps_Bluetooth/0001-AdapterState-Increase-BLE-and-BREDR-start-watchdog-timeouts.patch")
     ) || { echo "❌ Failed to patch packages/apps/Bluetooth! Aborting..."; exit 1; }
+
+    # --- LineageOS/packages_apps_UnifiedEmail ---
+    echo "   📂 packages/apps/UnifiedEmail"
+    echo "      ✉️ Patching UnifiedEmail"
+    separator
+
+    (
+        cd packages/apps/UnifiedEmail && \
+        git am -s < <(curl -sf "$REPO_URL/packages_apps_UnifiedEmail/0001-UnifiedEmail-Replace-incompatible-bitmap-drawables.patch")
+    ) || { echo "❌ Failed to patch packages/apps/UnifiedEmail! Aborting..."; exit 1; }
 else
     separator
     echo "❌ LineageOS build system not found. Make sure you're in the build folder! Aborting..."
