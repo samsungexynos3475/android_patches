@@ -29,4 +29,12 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `hardware_samsung/0001-samsung-hidl-Add-missing-touch-interface-declaration-to-init-script.patch`
 * **Details**: Adds missing HIDL interface declaration to Touch HAL init script to resolve `system_server` watchdog bootloops in Enforcing mode.
 
+### 6. libv4l2 cameraserver Freeze Fix
+* **Target Path**: `hardware/samsung_slsi/exynos`
+* **Filename**: `hardware_samsung_slsi_exynos/0001-libv4l2-Prevent-infinite-loop-when-fopen-fails-due-to-SELinux-denial.patch`
+* **Details**: Increments the node index during sysfs video node queries when `fopen` fails, preventing cameraserver infinite loops/freezes due to SELinux denials.
 
+### 7. gralloc CMA Heap uncached Allocation Workaround
+* **Target Path**: `hardware/samsung_slsi/exynos`
+* **Filename**: `hardware_samsung_slsi_exynos/0002-gralloc-Strip-ION_FLAG_CACHED-for-CMA-carveout-alloc.patch`
+* **Details**: Strips `ION_FLAG_CACHED` flags when allocating from the CMA carveout heap (`ION_HEAP_EXYNOS_CONTIG_MASK`) to prevent `-EINVAL` allocation failures and fix black screens in the camera preview.

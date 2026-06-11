@@ -1,0 +1,36 @@
+From d744ad36740ac5e593d5e537ea30759c431da4e6 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Wed, 10 Jun 2026 05:27:06 -0700
+Subject: [PATCH 1/2] libv4l2: Prevent infinite loop when fopen fails due to
+ SELinux denial
+
+If SELinux or filesystem permissions deny access to a sysfs video node,
+the while loop in `get_video_nodes()` gets stuck continuously trying to
+open the exact same node index indefinitely, causing the entire
+`cameraserver` and camera application to freeze.
+
+This commit fixes the bug by properly incrementing the node index (`i++`)
+and continuing to the next node when `fopen` fails.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ libv4l2/exynos_v4l2.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libv4l2/exynos_v4l2.c b/libv4l2/exynos_v4l2.c
+index cc838c2..4d1760c 100644
+--- a/libv4l2/exynos_v4l2.c
++++ b/libv4l2/exynos_v4l2.c
+@@ -136,6 +136,7 @@ int exynos_v4l2_open_devname(const char *devname, int oflag, ...)
+             stream_fd = fopen(filename, "r");
+             if (stream_fd == NULL) {
+                 ALOGE("failed to open sysfs entry for videodev");
++                i++;
+                 continue;   /* try next */
+             }
+ 
+-- 
+2.43.0
+
