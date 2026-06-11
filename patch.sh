@@ -74,6 +74,16 @@ if test -f "build/envsetup.sh"; then
         git am -s < <(curl -sf "$REPO_URL/hardware_interfaces/0001-camera-Relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch")
     ) || { echo "❌ Failed to patch hardware/interfaces! Aborting..."; exit 1; }
 
+    # --- LineageOS/android_hardware_samsung ---
+    echo "   📂 hardware/samsung"
+    echo "      👆 Patching Touch HAL"
+    separator
+
+    (
+        cd hardware/samsung && \
+        git am -s < <(curl -sf "$REPO_URL/hardware_samsung/0001-hidl-touch-Add-missing-interface-declaration-to-init-script.patch")
+    ) || { echo "❌ Failed to patch hardware/samsung! Aborting..."; exit 1; }
+
     # --- LineageOS/packages_apps_Bluetooth ---
     echo "   📂 packages/apps/Bluetooth"
     echo "      🔵 Patching Bluetooth"
