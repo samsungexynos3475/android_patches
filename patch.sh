@@ -84,6 +84,24 @@ if test -f "build/envsetup.sh"; then
         git am -s < <(curl -sf "$REPO_URL/hardware_samsung/0001-samsung-hidl-Add-missing-touch-interface-declaration-to-init-script.patch")
     ) || { echo "❌ Failed to patch hardware/samsung! Aborting..."; exit 1; }
 
+    # --- LineageOS/android_hardware_samsung_slsi_exynos ---
+    echo "   📂 hardware/samsung_slsi/exynos"
+    echo "      📹 Patching libv4l2"
+    separator
+
+    (
+        cd hardware/samsung_slsi/exynos && \
+        git am -s < <(curl -sf "$REPO_URL/hardware_samsung_slsi_exynos/0001-libv4l2-Prevent-infinite-loop-when-fopen-fails-due-to-SELinux-denial.patch")
+    ) || { echo "❌ Failed to patch hardware/samsung_slsi/exynos (libv4l2)! Aborting..."; exit 1; }
+
+    echo "      📹 Patching gralloc"
+    separator
+
+    (
+        cd hardware/samsung_slsi/exynos && \
+        git am -s < <(curl -sf "$REPO_URL/hardware_samsung_slsi_exynos/0002-gralloc-Strip-ION_FLAG_CACHED-for-CMA-carveout-alloc.patch")
+    ) || { echo "❌ Failed to patch hardware/samsung_slsi/exynos (gralloc)! Aborting..."; exit 1; }
+
     # --- LineageOS/packages_apps_Bluetooth ---
     echo "   📂 packages/apps/Bluetooth"
     echo "      🔵 Patching Bluetooth"
