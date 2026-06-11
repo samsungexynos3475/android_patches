@@ -23,3 +23,10 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Target Path**: `packages/apps/UnifiedEmail`
 * **Filename**: `packages_apps_UnifiedEmail/0001-UnifiedEmail-Replace-incompatible-bitmap-drawables.patch`
 * **Details**: Replaces incompatible `<bitmap>` wrapping of vector drawables with `<layer-list>` to resolve runtime `InflateException` crashes during account setup.
+
+### 5. LineageOS Touch HAL Interface Declaration Fix
+* **Target Path**: `hardware/samsung`
+* **Filename**: `hardware_samsung/0001-hidl-touch-Add-missing-interface-declaration-to-init-script.patch`
+* **Details**: Adds missing HIDL interface declaration to Touch HAL init script to resolve `system_server` watchdog bootloops in Enforcing mode.
+
+
