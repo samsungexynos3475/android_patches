@@ -82,7 +82,15 @@ if test -f "build/envsetup.sh"; then
     (
         cd hardware/samsung && \
         git am -s < <(curl -sf "$REPO_URL/hardware_samsung/0001-samsung-hidl-Add-missing-touch-interface-declaration-to-init-script.patch")
-    ) || { echo "❌ Failed to patch hardware/samsung! Aborting..."; exit 1; }
+    ) || { echo "❌ Failed to patch hardware/samsung (Touch HAL)! Aborting..."; exit 1; }
+
+    echo "      🎵 Patching Audio"
+    separator
+
+    (
+        cd hardware/samsung && \
+        git am -s < <(curl -sf "$REPO_URL/hardware_samsung/0002-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch")
+    ) || { echo "❌ Failed to patch hardware/samsung (audio)! Aborting..."; exit 1; }
 
     # --- LineageOS/android_hardware_samsung_slsi_exynos ---
     echo "   📂 hardware/samsung_slsi/exynos"
