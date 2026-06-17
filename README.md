@@ -38,3 +38,9 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Target Path**: `hardware/samsung_slsi/exynos`
 * **Filename**: `hardware_samsung_slsi_exynos/0002-gralloc-Strip-ION_FLAG_CACHED-for-CMA-carveout-alloc.patch`
 * **Details**: Strips `ION_FLAG_CACHED` flags when allocating from the CMA carveout heap (`ION_HEAP_EXYNOS_CONTIG_MASK`) to prevent `-EINVAL` allocation failures and fix black screens in the camera preview.
+
+### 8. Samsung Audio Auto-Fade-In Workaround
+* **Target Path**: `hardware/samsung`
+* **Filename**: `hardware_samsung/0002-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch`
+* **Details**: Monitors the PCM buffer for silence (>100ms) and applies a smooth 400ms software fade-in when audio resumes, suppressing initial loud blasts/pops caused by AudioFlinger volume setup delays.
+
