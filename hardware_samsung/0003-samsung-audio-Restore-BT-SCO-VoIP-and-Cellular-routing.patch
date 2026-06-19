@@ -1,0 +1,126 @@
+From 6012f6c035c14e7bf95cce80942a7a59a96f2e52 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Thu, 18 Jun 2026 20:02:11 -0700
+Subject: [PATCH] samsung: audio: Restore BT SCO VoIP and Cellular routing
+
+The Exynos 3475 and s2803x ALSA machine driver rely on ALSA Node 3 for the Bluetooth AIF3 interface. Ensure that start_voice_session_bt_sco opens this node without erroneously waking up the cellular baseband modem.
+
+- audio_hw.c: Revert hack that forced non-cellular VoIP calls to route through the baseband modem, which hijacked the audio pathways during calls on apps.
+- voice.c: Ensure start_voice_session_bt_sco properly opens ALSA Node 3 independently so the Bluetooth interface receives its clock signal.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ audio/audio_hw.c | 20 ++++++++++++++++++++
+ audio/voice.c    | 26 ++++++++++++--------------
+ 2 files changed, 32 insertions(+), 14 deletions(-)
+
+diff --git a/audio/audio_hw.c b/audio/audio_hw.c
+index 0c14aa0..5dc743b 100644
+--- a/audio/audio_hw.c
++++ b/audio/audio_hw.c
+@@ -1071,6 +1071,19 @@ static int select_devices(struct audio_device *adev,
+         }
+     }
+ 
++    /* Start BT SCO session BEFORE early return - Node 3 may not be open yet even if devices match */
++    if ((adev->mode == AUDIO_MODE_IN_COMMUNICATION || adev->mode == AUDIO_MODE_IN_CALL) &&
++        (out_snd_device == SND_DEVICE_OUT_BT_SCO ||
++         out_snd_device == SND_DEVICE_OUT_VOICE_BT_SCO ||
++         out_snd_device == SND_DEVICE_OUT_VOICE_BT_SCO_WB ||
++         in_snd_device == SND_DEVICE_IN_BT_SCO_MIC ||
++         in_snd_device == SND_DEVICE_IN_VOICE_BT_SCO_MIC ||
++         in_snd_device == SND_DEVICE_IN_VOICE_BT_SCO_MIC_WB) &&
++        !adev->bt_sco_active) {
++        adev->bt_sco_active = true;
++        start_voice_session_bt_sco(adev);
++    }
++
+     if (out_snd_device == usecase->out_snd_device &&
+         in_snd_device == usecase->in_snd_device) {
+         return 0;
+@@ -2309,6 +2322,13 @@ int enable_output_path_l(struct stream_out *out)
+     list_add_tail(&adev->usecase_list, &uc_info->adev_list_node);
+     select_devices(adev, out->usecase);
+ 
++    /* Start BT SCO session (opens Node 3 / AIF3) when output is routed to BT during VoIP */
++    if ((adev->mode == AUDIO_MODE_IN_COMMUNICATION || adev->mode == AUDIO_MODE_IN_CALL) &&
++        (out->devices & AUDIO_DEVICE_OUT_ALL_SCO) && !adev->bt_sco_active) {
++        adev->bt_sco_active = true;
++        start_voice_session_bt_sco(adev);
++    }
++
+     return 0;
+ }
+ 
+diff --git a/audio/voice.c b/audio/voice.c
+index 6d5e613..18bc192 100644
+--- a/audio/voice.c
++++ b/audio/voice.c
+@@ -153,13 +153,8 @@ void stop_voice_session_bt_sco(struct audio_device *adev) {
+         pcm_close(adev->pcm_sco_tx);
+         adev->pcm_sco_tx = NULL;
+     }
+-
+-    /* audio codecs like wm5201 need open modem pcm while using bt sco */
+-    if (adev->mode != AUDIO_MODE_IN_CALL)
+-        stop_voice_session(adev->voice.session);
+ }
+ 
+-/* must be called with the hw device mutex locked, OK to hold other mutexes */
+ void start_voice_session_bt_sco(struct audio_device *adev)
+ {
+     struct pcm_config *voice_sco_config;
+@@ -169,7 +164,15 @@ void start_voice_session_bt_sco(struct audio_device *adev)
+         return;
+     }
+ 
+-    ALOGV("%s: Opening SCO PCMs", __func__);
++    /*
++     * On Exynos 3475, the BT audio PCM device is at card 0, device 3
++     * (NOT device 2 which is the modem voice call path).
++     * Opening device 3 triggers s2803x_startup(S2803X_IF_BT) in the kernel,
++     * which activates the physical BT_PCM GPIO pins (gpz0-0 through gpz0-3).
++     * Without this, the pins stay in sleep mode and no audio flows between
++     * the s2803x mixer chip and the Bluetooth chip.
++     */
++    ALOGV("%s: Opening BT SCO PCMs (device 3)", __func__);
+ 
+     if (adev->voice.bluetooth_wb) {
+         ALOGV("%s: pcm_config wideband", __func__);
+@@ -179,8 +182,8 @@ void start_voice_session_bt_sco(struct audio_device *adev)
+         voice_sco_config = &pcm_config_voice_sco;
+     }
+ 
+-    adev->pcm_sco_rx = pcm_open(SOUND_CARD,
+-                                   SOUND_PLAYBACK_SCO_DEVICE,
++    /* BT audio is PCM device 3, not SOUND_PLAYBACK_SCO_DEVICE (which is 2 = modem) */
++    adev->pcm_sco_rx = pcm_open(SOUND_CARD, 3,
+                                    PCM_OUT|PCM_MONOTONIC,
+                                    voice_sco_config);
+     if (adev->pcm_sco_rx != NULL && !pcm_is_ready(adev->pcm_sco_rx)) {
+@@ -189,8 +192,7 @@ void start_voice_session_bt_sco(struct audio_device *adev)
+         goto err_sco_rx;
+     }
+ 
+-    adev->pcm_sco_tx = pcm_open(SOUND_CARD,
+-                                   SOUND_CAPTURE_SCO_DEVICE,
++    adev->pcm_sco_tx = pcm_open(SOUND_CARD, 3,
+                                    PCM_IN|PCM_MONOTONIC,
+                                    voice_sco_config);
+     if (adev->pcm_sco_tx && !pcm_is_ready(adev->pcm_sco_tx)) {
+@@ -202,10 +204,6 @@ void start_voice_session_bt_sco(struct audio_device *adev)
+     pcm_start(adev->pcm_sco_rx);
+     pcm_start(adev->pcm_sco_tx);
+ 
+-    /* audio codecs like wm5201 need open modem pcm while using bt sco */
+-    if (adev->mode != AUDIO_MODE_IN_CALL)
+-        start_voice_session(adev->voice.session);
+-
+     return;
+ 
+ err_sco_tx:
+-- 
+2.43.0
+

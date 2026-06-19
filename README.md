@@ -54,3 +54,8 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `system_bt/0001-btm-fix-SCO-I2S-routing-for-Android-10.patch`
 * **Details**: Injects Broadcom VSC initialization commands into `btm_send_connect_request` to configure the PCM/I2S interface for the s2803x codec.
 
+### 11. Samsung Audio BT SCO VoIP and Cellular routing restoration
+* **Target Path**: `hardware/samsung`
+* **Filename**: `hardware_samsung/0003-samsung-audio-Restore-BT-SCO-VoIP-and-Cellular-routing.patch`
+* **Details**: Restores BT SCO VoIP and cellular routing by opening card 0 device 3 (Bluetooth AIF3 interface) independently.
+
