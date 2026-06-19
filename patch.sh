@@ -64,6 +64,16 @@ if test -f "build/envsetup.sh"; then
         git am -s < <(curl -sf "$REPO_URL/frameworks_av/0001-Camera-stagefright-Resolve-video-recording-freezes-and-color.patch")
     ) || { echo "❌ Failed to patch frameworks/av! Aborting..."; exit 1; }
 
+    # --- LineageOS/android_frameworks_base ---
+    echo "   📂 frameworks/base"
+    echo "      ⚙️ Patching Watchdog Timeout"
+    separator
+
+    (
+        cd frameworks/base && \
+        git am -s < <(curl -sf "$REPO_URL/frameworks_base/0001-server-Increase-watchdog-timeout-to-180s-to-prevent-.patch")
+    ) || { echo "❌ Failed to patch frameworks/base! Aborting..."; exit 1; }
+
     # --- LineageOS/android_hardware_interfaces ---
     echo "   📂 hardware/interfaces"
     echo "      📷 Patching Camera"
@@ -138,6 +148,26 @@ if test -f "build/envsetup.sh"; then
         git am -s < <(curl -sf "$REPO_URL/packages_apps_Bluetooth/0001-AdapterState-Increase-BLE-and-BREDR-start-watchdog-timeouts.patch")
     ) || { echo "❌ Failed to patch packages/apps/Bluetooth! Aborting..."; exit 1; }
 
+    # --- LineageOS/android_packages_apps_PermissionController ---
+    echo "   📂 packages/apps/PermissionController"
+    echo "      🛡️ Patching PermissionController"
+    separator
+
+    (
+        cd packages/apps/PermissionController && \
+        git am -s < <(curl -sf "$REPO_URL/packages_apps_PermissionController/0001-permissioncontroller-persistent-to-prevent-OOM-panics.patch")
+    ) || { echo "❌ Failed to patch packages/apps/PermissionController! Aborting..."; exit 1; }
+
+    # --- LineageOS/android_packages_apps_Trebuchet ---
+    echo "   📂 packages/apps/Trebuchet"
+    echo "      🏠 Patching Trebuchet"
+    separator
+
+    (
+        cd packages/apps/Trebuchet && \
+        git am -s < <(curl -sf "$REPO_URL/packages_apps_Trebuchet/0001-trebuchet-persistent-to-prevent-OOM-panics.patch")
+    ) || { echo "❌ Failed to patch packages/apps/Trebuchet! Aborting..."; exit 1; }
+
     # --- LineageOS/packages_apps_UnifiedEmail ---
     echo "   📂 packages/apps/UnifiedEmail"
     echo "      ✉️ Patching UnifiedEmail"
@@ -147,6 +177,16 @@ if test -f "build/envsetup.sh"; then
         cd packages/apps/UnifiedEmail && \
         git am -s < <(curl -sf "$REPO_URL/packages_apps_UnifiedEmail/0001-UnifiedEmail-Replace-incompatible-bitmap-drawables.patch")
     ) || { echo "❌ Failed to patch packages/apps/UnifiedEmail! Aborting..."; exit 1; }
+
+    # --- LineageOS/android_packages_modules_ExtServices ---
+    echo "   📂 packages/modules/ExtServices"
+    echo "      ⚙️ Patching ExtServices"
+    separator
+
+    (
+        cd packages/modules/ExtServices && \
+        git am -s < <(curl -sf "$REPO_URL/packages_modules_ExtServices/0001-extservices-persistent-to-prevent-OOM-panics.patch")
+    ) || { echo "❌ Failed to patch packages/modules/ExtServices! Aborting..."; exit 1; }
 
     # --- LineageOS/android_system_bt ---
     echo "   📂 system/bt"
