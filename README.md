@@ -59,3 +59,8 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `hardware_samsung/0003-samsung-audio-Restore-BT-SCO-VoIP-and-Cellular-routing.patch`
 * **Details**: Restores BT SCO VoIP and cellular routing by opening card 0 device 3 (Bluetooth AIF3 interface) independently.
 
+### 12. Watchdog Timeout Extension
+* **Target Path**: `frameworks/base`
+* **Filename**: `frameworks_base/0001-server-Increase-watchdog-timeout-to-180s-to-prevent-.patch`
+* **Details**: Increases Watchdog timeout to 180s to prevent false-positive system_server watchdog panics on low RAM devices under memory pressure.
+

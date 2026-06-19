@@ -1,0 +1,30 @@
+From c7505736e903430b383e2b7e63f35d9fff033f97 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Fri, 19 Jun 2026 02:25:48 -0700
+Subject: [PATCH] services: Increase watchdog timeout to 180s to prevent
+ false-positive system_server panics on low RAM devices
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Change-Id: If70d0461ff5e9de901bf493f619b3005d7a9ffeb
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ services/core/java/com/android/server/Watchdog.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/Watchdog.java b/services/core/java/com/android/server/Watchdog.java
+index 5b9c78f6..ce0e2080 100644
+--- a/services/core/java/com/android/server/Watchdog.java
++++ b/services/core/java/com/android/server/Watchdog.java
+@@ -73,7 +73,7 @@ public class Watchdog extends Thread {
+     //         can trigger the watchdog.
+     // Note 2: The debug value is already below the wait time in ZygoteConnection. Wrapped
+     //         applications may not work with a debug build. CTS will fail.
+-    static final long DEFAULT_TIMEOUT = DB ? 10*1000 : 60*1000;
++    static final long DEFAULT_TIMEOUT = DB ? 10*1000 : 180*1000;
+     static final long CHECK_INTERVAL = DEFAULT_TIMEOUT / 2;
+ 
+     // These are temporally ordered: larger values as lateness increases
+-- 
+2.43.0
+
