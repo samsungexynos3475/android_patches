@@ -74,6 +74,16 @@ if test -f "build/envsetup.sh"; then
         git am -s < <(curl -sf "$REPO_URL/hardware_interfaces/0001-camera-Relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch")
     ) || { echo "❌ Failed to patch hardware/interfaces! Aborting..."; exit 1; }
 
+    # --- LineageOS/android_hardware_broadcom_libbt ---
+    echo "   📂 hardware/broadcom/libbt"
+    echo "      🔵 Patching libbt"
+    separator
+
+    (
+        cd hardware/broadcom/libbt && \
+        git am -s < <(curl -sf "$REPO_URL/hardware_broadcom_libbt/0001-libbt-Ensure-complete-I2S-PCM-initialization-sequence.patch")
+    ) || { echo "❌ Failed to patch hardware/broadcom/libbt! Aborting..."; exit 1; }
+
     # --- LineageOS/android_hardware_samsung ---
     echo "   📂 hardware/samsung"
     echo "      👆 Patching Touch HAL"
@@ -91,6 +101,14 @@ if test -f "build/envsetup.sh"; then
         cd hardware/samsung && \
         git am -s < <(curl -sf "$REPO_URL/hardware_samsung/0002-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch")
     ) || { echo "❌ Failed to patch hardware/samsung (audio)! Aborting..."; exit 1; }
+
+    echo "      🎵 Restoring BT SCO routing"
+    separator
+
+    (
+        cd hardware/samsung && \
+        git am -s < <(curl -sf "$REPO_URL/hardware_samsung/0003-samsung-audio-Restore-BT-SCO-VoIP-and-Cellular-routing.patch")
+    ) || { echo "❌ Failed to patch hardware/samsung (BT routing)! Aborting..."; exit 1; }
 
     # --- LineageOS/android_hardware_samsung_slsi_exynos ---
     echo "   📂 hardware/samsung_slsi/exynos"
@@ -129,6 +147,16 @@ if test -f "build/envsetup.sh"; then
         cd packages/apps/UnifiedEmail && \
         git am -s < <(curl -sf "$REPO_URL/packages_apps_UnifiedEmail/0001-UnifiedEmail-Replace-incompatible-bitmap-drawables.patch")
     ) || { echo "❌ Failed to patch packages/apps/UnifiedEmail! Aborting..."; exit 1; }
+
+    # --- LineageOS/android_system_bt ---
+    echo "   📂 system/bt"
+    echo "      🔵 Patching system_bt"
+    separator
+
+    (
+        cd system/bt && \
+        git am -s < <(curl -sf "$REPO_URL/system_bt/0001-btm-fix-SCO-I2S-routing-for-Android-10.patch")
+    ) || { echo "❌ Failed to patch system/bt! Aborting..."; exit 1; }
 else
     separator
     echo "❌ LineageOS build system not found. Make sure you're in the build folder! Aborting..."
