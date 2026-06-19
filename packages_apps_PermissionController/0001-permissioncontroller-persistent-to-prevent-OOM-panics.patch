@@ -1,0 +1,28 @@
+From adadcb8eb97a3a4195532de1820e59c29b15135f Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Fri, 19 Jun 2026 02:33:37 -0700
+Subject: [PATCH] permissioncontroller: persistent to prevent OOM panics
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Change-Id: Ibd6e5c4154b66f5d3d3a5b6a24d0e456838b503a
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ AndroidManifest.xml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 73bc297..12459aa 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -50,6 +50,7 @@
+             android:supportsRtl="true"
+             android:defaultToDeviceProtectedStorage="true"
+             android:directBootAware="true"
++            android:persistent="true"
+             android:theme="@style/FilterTouches">
+ 
+         <provider
+-- 
+2.43.0
+

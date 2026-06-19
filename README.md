@@ -64,3 +64,8 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `frameworks_base/0001-server-Increase-watchdog-timeout-to-180s-to-prevent-.patch`
 * **Details**: Increases Watchdog timeout to 180s to prevent false-positive system_server watchdog panics on low RAM devices under memory pressure.
 
+### 13. PermissionController Persistence
+* **Target Path**: `packages/apps/PermissionController`
+* **Filename**: `packages_apps_PermissionController/0001-permissioncontroller-persistent-to-prevent-OOM-panics.patch`
+* **Details**: Marks PermissionController as persistent to prevent OOM kills under low-RAM stress.
+
