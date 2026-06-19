@@ -1,0 +1,45 @@
+From e09c039d48db50be219654ce2531d7882da562d2 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Thu, 18 Jun 2026 19:43:17 -0700
+Subject: [PATCH] btm: fix SCO I2S routing for Android 10
+
+Android 10 removed BT_VND_OP_SET_AUDIO_STATE which prevented libbt-vendor from sending the necessary VSC initialization commands to the Broadcom controller to configure its PCM/I2S interface.
+
+Inject the exact VSCs (I2S, Master Role, 256KHz clock, Short sync) required by the s2803x codec directly into btm_send_connect_request.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ stack/btm/btm_sco.cc | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/stack/btm/btm_sco.cc b/stack/btm/btm_sco.cc
+index d8d2defde..3ad8d9042 100644
+--- a/stack/btm/btm_sco.cc
++++ b/stack/btm/btm_sco.cc
+@@ -241,6 +241,21 @@ tBTM_STATUS BTM_WriteScoData(UNUSED_ATTR uint16_t sco_inx,
+  ******************************************************************************/
+ static tBTM_STATUS btm_send_connect_request(uint16_t acl_handle,
+                                             enh_esco_params_t* p_setup) {
++  /* Force Broadcom SCO routing and I2S configuration */
++  /* HCI_VSC_WRITE_I2SPCM_INTERFACE_PARAM (0xFC6D) */
++  /* { I2S(1), Master(1), 8K(0), 256K(1) } */
++  uint8_t i2s_param[4] = {0x01, 0x01, 0x00, 0x01};
++  BTM_VendorSpecificCommand(0x006D, 4, i2s_param, NULL);
++
++  /* HCI_VSC_WRITE_SCO_PCM_INT_PARAM (0xFC1C) */
++  /* { PCM(0), 256K(1), Short(0), MasterSync(1), MasterClock(1) } */
++  uint8_t pcm_param[5] = {0x00, 0x01, 0x00, 0x01, 0x01};
++  BTM_VendorSpecificCommand(0x001C, 5, pcm_param, NULL);
++
++  /* HCI_VSC_WRITE_PCM_DATA_FORMAT_PARAM (0xFC1E) */
++  uint8_t fmt_param[5] = {0x03, 0x00, 0x00, 0x00, 0x00};
++  BTM_VendorSpecificCommand(0x001E, 5, fmt_param, NULL);
++
+   tACL_CONN* p_acl;
+ 
+   /* Send connect request depending on version of spec */
+-- 
+2.43.0
+

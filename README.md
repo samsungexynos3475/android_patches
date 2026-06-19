@@ -49,3 +49,8 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `hardware_broadcom_libbt/0001-libbt-Ensure-complete-I2S-PCM-initialization-sequence.patch`
 * **Details**: Ensures complete I2S/PCM initialization sequence by sending both PCM parameter and format commands in I2S mode.
 
+### 10. btm SCO I2S routing configuration for Android 10
+* **Target Path**: `system/bt`
+* **Filename**: `system_bt/0001-btm-fix-SCO-I2S-routing-for-Android-10.patch`
+* **Details**: Injects Broadcom VSC initialization commands into `btm_send_connect_request` to configure the PCM/I2S interface for the s2803x codec.
+
