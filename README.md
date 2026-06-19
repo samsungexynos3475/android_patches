@@ -69,3 +69,8 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `packages_apps_PermissionController/0001-permissioncontroller-persistent-to-prevent-OOM-panics.patch`
 * **Details**: Marks PermissionController as persistent to prevent OOM kills under low-RAM stress.
 
+### 14. Trebuchet Persistence
+* **Target Path**: `packages/apps/Trebuchet`
+* **Filename**: `packages_apps_Trebuchet/0001-trebuchet-persistent-to-prevent-OOM-panics.patch`
+* **Details**: Marks Trebuchet (Launcher) as persistent to prevent background launcher recreation lags and OOM kills.
+
