@@ -44,3 +44,8 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `hardware_samsung/0002-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch`
 * **Details**: Monitors the PCM buffer for silence (>100ms) and applies a smooth 400ms software fade-in when audio resumes, suppressing initial loud blasts/pops caused by AudioFlinger volume setup delays.
 
+### 9. Broadcom libbt I2S/PCM Initialization Sequence configuration
+* **Target Path**: `hardware/broadcom/libbt`
+* **Filename**: `hardware_broadcom_libbt/0001-libbt-Ensure-complete-I2S-PCM-initialization-sequence.patch`
+* **Details**: Ensures complete I2S/PCM initialization sequence by sending both PCM parameter and format commands in I2S mode.
+

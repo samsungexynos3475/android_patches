@@ -1,0 +1,41 @@
+From ed3efe733d6211ed854584042a0b14bda1897021 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Thu, 18 Jun 2026 20:09:13 -0700
+Subject: [PATCH] libbt: Ensure complete I2S/PCM initialization sequence
+
+When in I2S mode, we still must send the PCM parameter (0xFC1C) and PCM format (0xFC1E) commands. Send the complete VSC sequence.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ src/hardware.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/hardware.c b/src/hardware.c
+index f8ec118..e5ebed2 100644
+--- a/src/hardware.c
++++ b/src/hardware.c
+@@ -1196,7 +1196,8 @@ static void hw_sco_i2spcm_cfg_cback(void *p_mem)
+     if (status == BT_VND_OP_RESULT_SUCCESS)
+     {
+         if ((opcode == HCI_VSC_WRITE_I2SPCM_INTERFACE_PARAM) &&
+-            (SCO_INTERFACE_PCM == sco_bus_interface))
++            ((SCO_INTERFACE_PCM == sco_bus_interface) ||
++             (SCO_INTERFACE_I2S == sco_bus_interface)))
+         {
+             uint8_t ret = FALSE;
+ 
+@@ -1230,7 +1231,8 @@ static void hw_sco_i2spcm_cfg_cback(void *p_mem)
+             status = BT_VND_OP_RESULT_FAIL;
+         }
+         else if ((opcode == HCI_VSC_WRITE_SCO_PCM_INT_PARAM) &&
+-                 (SCO_INTERFACE_PCM == sco_bus_interface))
++                 ((SCO_INTERFACE_PCM == sco_bus_interface) ||
++                  (SCO_INTERFACE_I2S == sco_bus_interface)))
+         {
+             uint8_t ret = FALSE;
+ 
+-- 
+2.43.0
+
