@@ -74,3 +74,8 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `packages_apps_Trebuchet/0001-trebuchet-persistent-to-prevent-OOM-panics.patch`
 * **Details**: Marks Trebuchet (Launcher) as persistent to prevent background launcher recreation lags and OOM kills.
 
+### 15. ExtServices Persistence
+* **Target Path**: `packages/modules/ExtServices`
+* **Filename**: `packages_modules_ExtServices/0001-extservices-persistent-to-prevent-OOM-panics.patch`
+* **Details**: Marks ExtServices as persistent to prevent OOM kills under low-RAM stress.
+
