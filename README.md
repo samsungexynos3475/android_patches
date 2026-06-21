@@ -84,3 +84,8 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `frameworks_base/0002-keystore-backport-KeyStoreException-for-Android-12-compatibility.patch`
 * **Details**: Backports the Android 12 KeyStoreException class and Build.VERSION_CODES.DEVICE_INITIAL_SDK_INT field to allow modern keystore daemons (like TEESimulator) to initialize without throwing ClassNotFoundException on legacy Android 10.
 
+### 17. Keystore Silent KeyBlob Upgrade during Attestation
+* **Target Path**: `system/security`
+* **Filename**: `system_security/0001-keystore-silently-upgrade-key-blobs-during-attestation-to-bypass-KEY_REQUIRES_UPGRADE-errors.patch`
+* **Details**: Intercepts KEY_REQUIRES_UPGRADE errors during attestKey and silently upgrades the keyblobs, bypassing attestation failures on legacy devices where TrustZone patch level differs from OS properties.
+
