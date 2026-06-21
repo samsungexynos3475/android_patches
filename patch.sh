@@ -72,7 +72,15 @@ if test -f "build/envsetup.sh"; then
     (
         cd frameworks/base && \
         git am -s < <(curl -sf "$REPO_URL/frameworks_base/0001-server-Increase-watchdog-timeout-to-180s-to-prevent-.patch")
-    ) || { echo "❌ Failed to patch frameworks/base! Aborting..."; exit 1; }
+    ) || { echo "❌ Failed to patch frameworks/base (watchdog)! Aborting..."; exit 1; }
+
+    echo "      🔑 Backporting KeyStoreException"
+    separator
+
+    (
+        cd frameworks/base && \
+        git am -s < <(curl -sf "$REPO_URL/frameworks_base/0002-keystore-backport-KeyStoreException-for-Android-12-compatibility.patch")
+    ) || { echo "❌ Failed to patch frameworks/base (keystore)! Aborting..."; exit 1; }
 
     # --- LineageOS/android_hardware_interfaces ---
     echo "   📂 hardware/interfaces"
@@ -197,6 +205,16 @@ if test -f "build/envsetup.sh"; then
         cd system/bt && \
         git am -s < <(curl -sf "$REPO_URL/system_bt/0001-btm-fix-SCO-I2S-routing-for-Android-10.patch")
     ) || { echo "❌ Failed to patch system/bt! Aborting..."; exit 1; }
+
+    # --- LineageOS/android_system_security ---
+    echo "   📂 system/security"
+    echo "      🔑 Patching Keystore"
+    separator
+
+    (
+        cd system/security && \
+        git am -s < <(curl -sf "$REPO_URL/system_security/0001-keystore-silently-upgrade-key-blobs-during-attestation-to-bypass-KEY_REQUIRES_UPGRADE-errors.patch")
+    ) || { echo "❌ Failed to patch system/security! Aborting..."; exit 1; }
 else
     separator
     echo "❌ LineageOS build system not found. Make sure you're in the build folder! Aborting..."
