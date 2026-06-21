@@ -79,3 +79,8 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `packages_modules_ExtServices/0001-extservices-persistent-to-prevent-OOM-panics.patch`
 * **Details**: Marks ExtServices as persistent to prevent OOM kills under low-RAM stress.
 
+### 16. Keystore KeyStoreException backport for Android 12 compatibility
+* **Target Path**: `frameworks/base`
+* **Filename**: `frameworks_base/0002-keystore-backport-KeyStoreException-for-Android-12-compatibility.patch`
+* **Details**: Backports the Android 12 KeyStoreException class and Build.VERSION_CODES.DEVICE_INITIAL_SDK_INT field to allow modern keystore daemons (like TEESimulator) to initialize without throwing ClassNotFoundException on legacy Android 10.
+
