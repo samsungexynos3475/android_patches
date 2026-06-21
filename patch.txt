@@ -1,0 +1,45 @@
+# --- LineageOS/android_frameworks_av ---
+"frameworks/av" "🎥" "Video Recording" "0001-Camera-stagefright-Resolve-video-recording-freezes-and-color.patch"
+
+# --- LineageOS/android_frameworks_base ---
+"frameworks/base" \
+  "⚙️" "Watchdog Timeout" "0001-services-Increase-watchdog-timeout-to-180s-to-prevent-.patch" \
+  "🔑" "KeyStoreException" "0002-keystore-backport-KeyStoreException-for-Android-12-compatibility.patch"
+
+# --- LineageOS/android_hardware_interfaces ---
+"hardware/interfaces" "📷" "Camera" "0001-camera-Relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch"
+
+# --- LineageOS/android_hardware_broadcom_libbt ---
+"hardware/broadcom/libbt" "🔵" "libbt" "0001-libbt-Ensure-complete-I2S-PCM-initialization-sequence.patch"
+
+# --- LineageOS/android_hardware_samsung ---
+"hardware/samsung" \
+  "👆" "Touch HAL" "0001-samsung-hidl-Add-missing-touch-interface-declaration-to-init-script.patch" \
+  "🎵" "Audio" "0002-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch" \
+  "🎵" "BT SCO routing" "0003-samsung-audio-Restore-BT-SCO-VoIP-and-Cellular-routing.patch"
+
+# --- LineageOS/android_hardware_samsung_slsi_exynos ---
+"hardware/samsung_slsi/exynos" \
+  "📹" "libv4l2" "0001-libv4l2-Prevent-infinite-loop-when-fopen-fails-due-to-SELinux-denial.patch" \
+  "📹" "gralloc" "0002-gralloc-Strip-ION_FLAG_CACHED-for-CMA-carveout-alloc.patch"
+
+# --- LineageOS/packages_apps_Bluetooth ---
+"packages/apps/Bluetooth" "🔵" "Bluetooth" "0001-AdapterState-Increase-BLE-and-BREDR-start-watchdog-timeouts.patch"
+
+# --- LineageOS/android_packages_apps_PermissionController ---
+"packages/apps/PermissionController" "🛡️" "PermissionController" "0001-permissioncontroller-persistent-to-prevent-OOM-panics.patch"
+
+# --- LineageOS/android_packages_apps_Trebuchet ---
+"packages/apps/Trebuchet" "🏠" "Trebuchet" "0001-trebuchet-persistent-to-prevent-OOM-panics.patch"
+
+# --- LineageOS/packages_apps_UnifiedEmail ---
+"packages/apps/UnifiedEmail" "✉️" "UnifiedEmail" "0001-UnifiedEmail-Replace-incompatible-bitmap-drawables.patch"
+
+# --- LineageOS/android_packages_modules_ExtServices ---
+"packages/modules/ExtServices" "⚙️" "ExtServices" "0001-extservices-persistent-to-prevent-OOM-panics.patch"
+
+# --- LineageOS/android_system_bt ---
+"system/bt" "🔵" "system_bt" "0001-btm-fix-SCO-I2S-routing-for-Android-10.patch"
+
+# --- LineageOS/android_system_security ---
+"system/security" "🔑" "Keystore" "0001-keystore-silently-upgrade-key-blobs-during-attestation-to-bypass-KEY_REQUIRES_UPGRADE-errors.patch"
