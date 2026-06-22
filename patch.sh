@@ -4,6 +4,45 @@ separator() {
     echo "---------------------------------------------------------"
 }
 
+apply_patch() {
+    local repo_dir="$1"
+    local emoji="$2"
+    local desc="$3"
+    local patch_url="$4"
+
+    echo "   📂 $repo_dir"
+    echo "      $emoji Patching $desc"
+    separator
+
+    local temp_patch
+    temp_patch=$(mktemp)
+
+    if ! curl -sf "$patch_url" > "$temp_patch"; then
+        echo "❌ Failed to download patch: $patch_url"
+        rm -f "$temp_patch"
+        exit 1
+    fi
+
+    # Extract subject to check if already applied (handling unfolded multi-line headers, CRLF, and stripping [PATCH] prefixes)
+    local subject
+    subject=$(awk '/^Subject: / { sub(/\r$/, ""); sub(/^Subject: /, ""); subj = $0; while (getline > 0) { sub(/\r$/, ""); if (/^[ \t]/) { sub(/^[ \t]+/, ""); subj = subj " " $0 } else { break } }; sub(/^\[[^]]*\] /, "", subj); print subj; exit }' "$temp_patch")
+
+    if [ -n "$subject" ] && [ -n "$(git -C "$repo_dir" log -F --grep="$subject" -n 1 --oneline)" ]; then
+        echo "      ✔ Already applied: $subject"
+        separator
+        rm -f "$temp_patch"
+        return 0
+    fi
+
+    if ! git -C "$repo_dir" am -s < "$temp_patch"; then
+        echo "❌ Failed to patch $repo_dir ($desc)! Aborting..."
+        rm -f "$temp_patch"
+        exit 1
+    fi
+
+    rm -f "$temp_patch"
+}
+
 list_versions() {
     separator
     echo "🔍 Retrieving available LineageOS versions from remote..."
@@ -34,187 +73,122 @@ list_versions() {
     separator
 }
 
-if [ "$1" = "list" ] || [ "$1" = "--list" ] || [ "$1" = "-l" ]; then
-    list_versions
-    exit 0
-fi
+VERSION=""
+PATCHES_FILE_ARG=""
 
-if [ -z "$1" ]; then
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -v|--version)
+            VERSION="$2"
+            shift 2
+            ;;
+        -p|--patches)
+            PATCHES_FILE_ARG="$2"
+            shift 2
+            ;;
+        -l|--list|list)
+            list_versions
+            exit 0
+            ;;
+        -h|--help)
+            echo "Usage: patch.sh <version> [options]"
+            echo "   or: patch.sh [options]"
+            echo ""
+            echo "Options:"
+            echo "  -v, --version <version>  LineageOS version (e.g., 17.1)"
+            echo "  -p, --patches <file>     Custom patch list filename (default: patch.txt)"
+            echo "  -l, --list               List available versions"
+            echo "  -h, --help               Show this help message"
+            exit 0
+            ;;
+        -*)
+            separator
+            echo "❌ Error: Unknown option $1"
+            echo "Run patch.sh --help for usage details."
+            separator
+            exit 1
+            ;;
+        *)
+            if [ -z "$VERSION" ]; then
+                VERSION="$1"
+            else
+                separator
+                echo "❌ Error: Multiple versions specified ($VERSION and $1)"
+                separator
+                exit 1
+            fi
+            shift
+            ;;
+    esac
+done
+
+if [ -z "$VERSION" ]; then
     separator
     echo "❌ Error: LineageOS version not specified."
-    echo "Usage: patch.sh <version> (e.g., 17.1) or patch.sh -l | --list"
+    echo "Usage: patch.sh <version> (e.g., 17.1) or patch.sh -v <version> -p <file>"
     list_versions
     exit 1
 fi
 
 if test -f "build/envsetup.sh"; then
-    REPO_URL="https://raw.githubusercontent.com/samsungexynos3475/android_patches/refs/heads/lineage-$1"
+    REPO_URL="https://raw.githubusercontent.com/samsungexynos3475/android_patches/refs/heads/lineage-$VERSION"
 
     separator
     echo "✅ LineageOS build system found. Starting to patch now!"
     separator
 
-    # --- LineageOS/android_frameworks_av ---
-    echo "   📂 frameworks/av"
-    echo "      🎥 Patching Video Recording"
-    separator
+    patches_file=$(mktemp)
 
-    (
-        cd frameworks/av && \
-        git am -s < <(curl -sf "$REPO_URL/frameworks_av/0001-Camera-stagefright-Resolve-video-recording-freezes-and-color.patch")
-    ) || { echo "❌ Failed to patch frameworks/av! Aborting..."; exit 1; }
+    patches_name="patch.txt"
+    if [ -n "$PATCHES_FILE_ARG" ]; then
+        patches_name="$PATCHES_FILE_ARG"
+    fi
 
-    # --- LineageOS/android_frameworks_base ---
-    echo "   📂 frameworks/base"
-    echo "      ⚙️ Patching Watchdog Timeout"
-    separator
+    # Use specified patches file from current directory or script directory if it exists locally,
+    # otherwise download it from the target lineage branch
+    if [ -f "$patches_name" ]; then
+        cp "$patches_name" "$patches_file"
+    elif [ -f "$(dirname "$0")/$patches_name" ]; then
+        cp "$(dirname "$0")/$patches_name" "$patches_file"
+    else
+        if ! curl -sf "$REPO_URL/$patches_name" > "$patches_file"; then
+            echo "❌ Failed to download patches file: $REPO_URL/$patches_name"
+            rm -f "$patches_file"
+            exit 1
+        fi
+    fi
 
-    (
-        cd frameworks/base && \
-        git am -s < <(curl -sf "$REPO_URL/frameworks_base/0001-server-Increase-watchdog-timeout-to-180s-to-prevent-.patch")
-    ) || { echo "❌ Failed to patch frameworks/base (watchdog)! Aborting..."; exit 1; }
+    # Read the patches_file line by line, parsing the grouped array elements
+    while read -r line || [ -n "$line" ]; do
+        # Handle backslash line continuations
+        while [[ "$line" =~ \\$ ]]; do
+            line="${line%\\}"
+            read -r next_line || break
+            line="$line$next_line"
+        done
 
-    echo "      🔑 Backporting KeyStoreException"
-    separator
+        # Ignore empty lines and comments
+        [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
 
-    (
-        cd frameworks/base && \
-        git am -s < <(curl -sf "$REPO_URL/frameworks_base/0002-keystore-backport-KeyStoreException-for-Android-12-compatibility.patch")
-    ) || { echo "❌ Failed to patch frameworks/base (keystore)! Aborting..."; exit 1; }
+        # Parse the line as a bash array to respect quoted strings with spaces
+        eval "local_array=( $line )"
+        repo_dir="${local_array[0]}"
 
-    # --- LineageOS/android_hardware_interfaces ---
-    echo "   📂 hardware/interfaces"
-    echo "      📷 Patching Camera"
-    separator
+        # Iterate over triplets of (emoji, desc, filename)
+        for ((i=1; i<${#local_array[@]}; i+=3)); do
+            emoji="${local_array[i]}"
+            desc="${local_array[i+1]}"
+            filename="${local_array[i+2]}"
 
-    (
-        cd hardware/interfaces && \
-        git am -s < <(curl -sf "$REPO_URL/hardware_interfaces/0001-camera-Relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch")
-    ) || { echo "❌ Failed to patch hardware/interfaces! Aborting..."; exit 1; }
+            # Construct project folder name (replacing / with _) and patch URL
+            folder_name=$(echo "$repo_dir" | tr '/' '_')
+            patch_url="$REPO_URL/$folder_name/$filename"
 
-    # --- LineageOS/android_hardware_broadcom_libbt ---
-    echo "   📂 hardware/broadcom/libbt"
-    echo "      🔵 Patching libbt"
-    separator
+            apply_patch "$repo_dir" "$emoji" "$desc" "$patch_url"
+        done
+    done < "$patches_file"
 
-    (
-        cd hardware/broadcom/libbt && \
-        git am -s < <(curl -sf "$REPO_URL/hardware_broadcom_libbt/0001-libbt-Ensure-complete-I2S-PCM-initialization-sequence.patch")
-    ) || { echo "❌ Failed to patch hardware/broadcom/libbt! Aborting..."; exit 1; }
-
-    # --- LineageOS/android_hardware_samsung ---
-    echo "   📂 hardware/samsung"
-    echo "      👆 Patching Touch HAL"
-    separator
-
-    (
-        cd hardware/samsung && \
-        git am -s < <(curl -sf "$REPO_URL/hardware_samsung/0001-samsung-hidl-Add-missing-touch-interface-declaration-to-init-script.patch")
-    ) || { echo "❌ Failed to patch hardware/samsung (Touch HAL)! Aborting..."; exit 1; }
-
-    echo "      🎵 Patching Audio"
-    separator
-
-    (
-        cd hardware/samsung && \
-        git am -s < <(curl -sf "$REPO_URL/hardware_samsung/0002-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch")
-    ) || { echo "❌ Failed to patch hardware/samsung (audio)! Aborting..."; exit 1; }
-
-    echo "      🎵 Restoring BT SCO routing"
-    separator
-
-    (
-        cd hardware/samsung && \
-        git am -s < <(curl -sf "$REPO_URL/hardware_samsung/0003-samsung-audio-Restore-BT-SCO-VoIP-and-Cellular-routing.patch")
-    ) || { echo "❌ Failed to patch hardware/samsung (BT routing)! Aborting..."; exit 1; }
-
-    # --- LineageOS/android_hardware_samsung_slsi_exynos ---
-    echo "   📂 hardware/samsung_slsi/exynos"
-    echo "      📹 Patching libv4l2"
-    separator
-
-    (
-        cd hardware/samsung_slsi/exynos && \
-        git am -s < <(curl -sf "$REPO_URL/hardware_samsung_slsi_exynos/0001-libv4l2-Prevent-infinite-loop-when-fopen-fails-due-to-SELinux-denial.patch")
-    ) || { echo "❌ Failed to patch hardware/samsung_slsi/exynos (libv4l2)! Aborting..."; exit 1; }
-
-    echo "      📹 Patching gralloc"
-    separator
-
-    (
-        cd hardware/samsung_slsi/exynos && \
-        git am -s < <(curl -sf "$REPO_URL/hardware_samsung_slsi_exynos/0002-gralloc-Strip-ION_FLAG_CACHED-for-CMA-carveout-alloc.patch")
-    ) || { echo "❌ Failed to patch hardware/samsung_slsi/exynos (gralloc)! Aborting..."; exit 1; }
-
-    # --- LineageOS/packages_apps_Bluetooth ---
-    echo "   📂 packages/apps/Bluetooth"
-    echo "      🔵 Patching Bluetooth"
-    separator
-
-    (
-        cd packages/apps/Bluetooth && \
-        git am -s < <(curl -sf "$REPO_URL/packages_apps_Bluetooth/0001-AdapterState-Increase-BLE-and-BREDR-start-watchdog-timeouts.patch")
-    ) || { echo "❌ Failed to patch packages/apps/Bluetooth! Aborting..."; exit 1; }
-
-    # --- LineageOS/android_packages_apps_PermissionController ---
-    echo "   📂 packages/apps/PermissionController"
-    echo "      🛡️ Patching PermissionController"
-    separator
-
-    (
-        cd packages/apps/PermissionController && \
-        git am -s < <(curl -sf "$REPO_URL/packages_apps_PermissionController/0001-permissioncontroller-persistent-to-prevent-OOM-panics.patch")
-    ) || { echo "❌ Failed to patch packages/apps/PermissionController! Aborting..."; exit 1; }
-
-    # --- LineageOS/android_packages_apps_Trebuchet ---
-    echo "   📂 packages/apps/Trebuchet"
-    echo "      🏠 Patching Trebuchet"
-    separator
-
-    (
-        cd packages/apps/Trebuchet && \
-        git am -s < <(curl -sf "$REPO_URL/packages_apps_Trebuchet/0001-trebuchet-persistent-to-prevent-OOM-panics.patch")
-    ) || { echo "❌ Failed to patch packages/apps/Trebuchet! Aborting..."; exit 1; }
-
-    # --- LineageOS/packages_apps_UnifiedEmail ---
-    echo "   📂 packages/apps/UnifiedEmail"
-    echo "      ✉️ Patching UnifiedEmail"
-    separator
-
-    (
-        cd packages/apps/UnifiedEmail && \
-        git am -s < <(curl -sf "$REPO_URL/packages_apps_UnifiedEmail/0001-UnifiedEmail-Replace-incompatible-bitmap-drawables.patch")
-    ) || { echo "❌ Failed to patch packages/apps/UnifiedEmail! Aborting..."; exit 1; }
-
-    # --- LineageOS/android_packages_modules_ExtServices ---
-    echo "   📂 packages/modules/ExtServices"
-    echo "      ⚙️ Patching ExtServices"
-    separator
-
-    (
-        cd packages/modules/ExtServices && \
-        git am -s < <(curl -sf "$REPO_URL/packages_modules_ExtServices/0001-extservices-persistent-to-prevent-OOM-panics.patch")
-    ) || { echo "❌ Failed to patch packages/modules/ExtServices! Aborting..."; exit 1; }
-
-    # --- LineageOS/android_system_bt ---
-    echo "   📂 system/bt"
-    echo "      🔵 Patching system_bt"
-    separator
-
-    (
-        cd system/bt && \
-        git am -s < <(curl -sf "$REPO_URL/system_bt/0001-btm-fix-SCO-I2S-routing-for-Android-10.patch")
-    ) || { echo "❌ Failed to patch system/bt! Aborting..."; exit 1; }
-
-    # --- LineageOS/android_system_security ---
-    echo "   📂 system/security"
-    echo "      🔑 Patching Keystore"
-    separator
-
-    (
-        cd system/security && \
-        git am -s < <(curl -sf "$REPO_URL/system_security/0001-keystore-silently-upgrade-key-blobs-during-attestation-to-bypass-KEY_REQUIRES_UPGRADE-errors.patch")
-    ) || { echo "❌ Failed to patch system/security! Aborting..."; exit 1; }
+    rm -f "$patches_file"
 else
     separator
     echo "❌ LineageOS build system not found. Make sure you're in the build folder! Aborting..."
