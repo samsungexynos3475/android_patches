@@ -1,5 +1,14 @@
+# --- LineageOS/android_frameworks_av ---
+"frameworks/av" "🎥" "cameraserver: relax VideoNativeHandleMetadata size validation" "0001-cameraserver-relax-VideoNativeHandleMetadata-size-validation-for-legacy-HALs.patch"
+
 # --- LineageOS/android_hardware_broadcom_wlan ---
 "hardware/broadcom/wlan" "📶" "Wifi HAL" "0001-WifiHAl-Fix-fatal-use-after-free-causing-infinite-POLLNVAL-loop.patch"
+
+# --- LineageOS/android_hardware_interfaces ---
+"hardware/interfaces" "📷" "Camera" "0001-camera-relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch"
+
+# --- LineageOS/android_hardware_lineage_interfaces ---
+"hardware/lineage/interfaces" "📷" "Camera" "0001-interfaces-camera-relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch"
 
 # --- LineageOS/android_hardware_samsung ---
 "hardware/samsung" "💡" "Light HAL" "0001-hidl-light-cache-max_brightness-during-initialization.patch"

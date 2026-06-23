@@ -1,0 +1,34 @@
+From e4b61d72c1bd4134c8281a2b3ec591dd6a1b9b4b Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Tue, 23 Jun 2026 05:20:13 -0700
+Subject: [PATCH] interfaces: camera: relax metadata buffer size check in
+ sDataCbTimestamp
+
+Older legacy camera HALs (such as Exynos 3475) utilize a 20-byte metadata buffer rather than the standard 8-byte Android VideoNativeHandleMetadata. The strict equality check in sDataCbTimestamp (`size == sizeof(VideoNativeHandleMetadata)`) causes these custom buffers to be silently rejected by the HIDL transport layer, preventing the native file descriptors from being correctly unmarshaled and passed to cameraserver.
+
+This patch changes the strict equality check to a `>=` check, allowing the custom metadata struct to pass validation and restoring video recording capabilities for legacy devices relying on hardware-specific metadata sizes.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Change-Id: I45affb5018b667ceaa4371b3d8daee4712bdaeed
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ camera/device/1.0-legacy/CameraDevice.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/camera/device/1.0-legacy/CameraDevice.cpp b/camera/device/1.0-legacy/CameraDevice.cpp
+index f324e45..9825f93 100644
+--- a/camera/device/1.0-legacy/CameraDevice.cpp
++++ b/camera/device/1.0-legacy/CameraDevice.cpp
+@@ -508,7 +508,7 @@ void CameraDevice::sDataCbTimestamp(nsecs_t timestamp, int32_t msg_type,
+ 
+     native_handle_t* handle = nullptr;
+     if (object->mMetadataMode) {
+-        if (mem->mBufSize == sizeof(VideoNativeHandleMetadata)) {
++        if (mem->mBufSize >= sizeof(VideoNativeHandleMetadata)) {
+             VideoNativeHandleMetadata* md = (VideoNativeHandleMetadata*)
+                     ((uint8_t*) mem->mHidlHeapMemData + index * mem->mBufSize);
+             if (md->eType == kMetadataBufferTypeNativeHandleSource) {
+-- 
+2.43.0
+
