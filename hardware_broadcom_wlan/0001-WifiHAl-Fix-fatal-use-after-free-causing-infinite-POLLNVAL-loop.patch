@@ -1,0 +1,69 @@
+From a55a3b5d0ff1a0a4eff4db65bd0c0f3a6506af80 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Mon, 22 Jun 2026 22:33:01 -0700
+Subject: [PATCH] WifiHAl: Fix fatal use-after-free causing infinite POLLNVAL
+ loop
+
+On older bcmdhd drivers (like Exynos3475), the `vendor` netlink
+multicast group is not supported. During `wifi_pre_initialize()`,
+`wifi_add_membership(handle, "vendor")` fails, which triggers the
+error path where the HAL frees the netlink sockets and the
+global `halInfo` struct.
+
+However, the code failed to set the global `halInfo` pointer to
+`NULL` after calling `free(halInfo)`. When the framework subsequently
+called `wifi_initialize()`, the HAL saw `halInfo != NULL` (as a
+dangling pointer) and bypassed initialization, assuming it succeeded.
+The HAL then started the `wifi_event_loop` thread, which repeatedly
+called `poll()` on the now-closed netlink socket file descriptor.
+This resulted in `poll()` infinitely returning the `POLLNVAL` (0x20)
+error flag, spewing thousands of "Unknown event - 20, 0" logs per
+second until `android.hardware.wifi@1.0-service` aborted.
+
+This patch fixes the issue by:
+1. Moving the `vendor` multicast group registration outside of the
+   fatal error block, making it optional so the HAL can continue
+   initializing even if the driver lacks support for it.
+2. Explicitly setting `halInfo = NULL;` after `free(halInfo)` in all
+   error paths to permanently eradicate the use-after-free vulnerability.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Change-Id: I183a67339e71b48d5f144277dabce696a67b8743
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ bcmdhd/wifi_hal/wifi_hal.cpp | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/bcmdhd/wifi_hal/wifi_hal.cpp b/bcmdhd/wifi_hal/wifi_hal.cpp
+index 258725c..eb3f232 100755
+--- a/bcmdhd/wifi_hal/wifi_hal.cpp
++++ b/bcmdhd/wifi_hal/wifi_hal.cpp
+@@ -355,20 +355,22 @@ wifi_error wifi_pre_initialize(void)
+         nl_socket_free(event_sock);
+         pthread_mutex_destroy(&halInfo->cb_lock);
+         free(halInfo);
++        halInfo = NULL;
+         return WIFI_ERROR_NOT_AVAILABLE;
+     }
+ 
+     if ((wifi_add_membership(handle, "scan") < 0) ||
+             (wifi_add_membership(handle, "mlme")  < 0) ||
+-            (wifi_add_membership(handle, "regulatory") < 0) ||
+-            (wifi_add_membership(handle, "vendor") < 0)) {
++            (wifi_add_membership(handle, "regulatory") < 0)) {
+         ALOGE("Add membership failed");
+         nl_socket_free(cmd_sock);
+         nl_socket_free(event_sock);
+         pthread_mutex_destroy(&halInfo->cb_lock);
+         free(halInfo);
++        halInfo = NULL;
+         return WIFI_ERROR_NOT_AVAILABLE;
+     }
++    wifi_add_membership(handle, "vendor");
+ 
+     ALOGI("Initialized Wifi HAL Successfully; vendor cmd = %d", NL80211_CMD_VENDOR);
+     wlan0Handle = wifi_get_wlan_interface((wifi_handle)halInfo, ifaceHandles, numIfaceHandles);
+-- 
+2.43.0
+

@@ -1,0 +1,64 @@
+From 9f63dd2d5512c150eac00008dd3ce644ca0497f3 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Mon, 22 Jun 2026 06:57:14 -0700
+Subject: [PATCH] hidl: light: cache max_brightness during initialization
+
+During the screen-off animation, DisplayPowerController updates
+the brightness at 60 FPS. Reading the max_brightness sysfs node
+on every single setLight call causes a massive 1.2 second delay and
+exhausts the binder thread pool.
+
+Cache the value in the constructor to eliminate the overhead.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Change-Id: I6e16a53ae85f98d77dd513fbc896c711f1f939f5
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ hidl/light/Light.cpp | 7 ++++---
+ hidl/light/Light.h   | 2 ++
+ 2 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/hidl/light/Light.cpp b/hidl/light/Light.cpp
+index 6a105da..580cdb1 100644
+--- a/hidl/light/Light.cpp
++++ b/hidl/light/Light.cpp
+@@ -52,6 +52,8 @@ static T get(const std::string& path, const T& def) {
+ }
+ 
+ Light::Light() {
++    mMaxBrightness = get(PANEL_MAX_BRIGHTNESS_NODE, MAX_INPUT_BRIGHTNESS);
++
+     mLights.emplace(Type::BACKLIGHT,
+                     std::bind(&Light::handleBacklight, this, std::placeholders::_1));
+ #ifdef BUTTON_BRIGHTNESS_NODE
+@@ -84,11 +86,10 @@ Return<Status> Light::setLight(Type type, const LightState& state) {
+ }
+ 
+ void Light::handleBacklight(const LightState& state) {
+-    uint32_t max_brightness = get(PANEL_MAX_BRIGHTNESS_NODE, MAX_INPUT_BRIGHTNESS);
+     uint32_t brightness = rgbToBrightness(state);
+ 
+-    if (max_brightness != MAX_INPUT_BRIGHTNESS) {
+-        brightness = brightness * max_brightness / MAX_INPUT_BRIGHTNESS;
++    if (mMaxBrightness != MAX_INPUT_BRIGHTNESS) {
++        brightness = brightness * mMaxBrightness / MAX_INPUT_BRIGHTNESS;
+     }
+ 
+     set(PANEL_BRIGHTNESS_NODE, brightness);
+diff --git a/hidl/light/Light.h b/hidl/light/Light.h
+index a318e15..73e3563 100644
+--- a/hidl/light/Light.h
++++ b/hidl/light/Light.h
+@@ -63,6 +63,8 @@ struct Light : public ILight {
+ 
+     uint32_t rgbToBrightness(const LightState& state);
+ 
++    uint32_t mMaxBrightness;
++
+     std::mutex mLock;
+     std::unordered_map<Type, std::function<void(const LightState&)>> mLights;
+ };
+-- 
+2.43.0
+

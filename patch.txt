@@ -1,0 +1,5 @@
+# --- LineageOS/android_hardware_broadcom_wlan ---
+"hardware/broadcom/wlan" "📶" "Wifi HAL" "0001-WifiHAl-Fix-fatal-use-after-free-causing-infinite-POLLNVAL-loop.patch"
+
+# --- LineageOS/android_hardware_samsung ---
+"hardware/samsung" "💡" "Light HAL" "0001-hidl-light-cache-max_brightness-during-initialization.patch"
