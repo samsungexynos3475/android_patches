@@ -79,6 +79,12 @@ This branch contains custom hardware patches for LineageOS 18.1 on Exynos 3475 d
 * **Filename**: `frameworks_base/0001-core-Sync-float-brightness-from-int-setting-on-first-boot.patch`
 * **Details**: Synchronizes the new `SCREEN_BRIGHTNESS_FLOAT` setting from the legacy integer `SCREEN_BRIGHTNESS` setting if the float setting is uninitialized (`Float.NaN`) on first boot or factory reset. This prevents physical screen brightness from defaulting to 50% while the Settings App UI slider incorrectly displays 0%.
 
+### 16. SetupWizard Diagnostic Metrics Opt-Out by Default
+* **Target Path**: `packages/apps/SetupWizard`
+* **Filename**: `packages_apps_SetupWizard/0001-SetupWizard-Uncheck-Help-Improve-LineageOS-by-default.patch`
+* **Details**: Flips the default checkbox state for sending diagnostic and usage data to LineageOS in the initial setup wizard to start unchecked, requiring users to explicitly opt-in instead of opt-out.
+
+
 
 
 

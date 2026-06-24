@@ -32,6 +32,9 @@
 # --- LineageOS/android_packages_apps_Settings ---
 "packages/apps/Settings" "🔋" "Protect battery toggle" "../batteryextender-eleven/packages_apps_Settings/0001-Settings-add-Protect-battery-toggle.patch"
 
+# --- LineageOS/android_packages_apps_SetupWizard ---
+"packages/apps/SetupWizard" "🧙" "Uncheck metrics by default" "0001-SetupWizard-Uncheck-Help-Improve-LineageOS-by-default.patch"
+
 # --- LineageOS/android_packages_apps_Updater ---
 "packages/apps/Updater" "🔄" "Updater custom URL" "0001-Updater-change-update-url.patch"
 
