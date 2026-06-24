@@ -74,6 +74,12 @@ This branch contains custom hardware patches for LineageOS 18.1 on Exynos 3475 d
 * **Filename**: `hardware_samsung/0003-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch`
 * **Details**: Monitors the PCM buffer for silence (>100ms) and applies a smooth 280ms software fade-in when audio resumes, suppressing initial loud blasts/pops caused by AudioFlinger volume setup delays on headsets and other outputs (excluding the built-in speaker).
 
+### 15. Brightness Float Setting Synchronization on First Boot
+* **Target Path**: `frameworks/base`
+* **Filename**: `frameworks_base/0001-core-Sync-float-brightness-from-int-setting-on-first-boot.patch`
+* **Details**: Synchronizes the new `SCREEN_BRIGHTNESS_FLOAT` setting from the legacy integer `SCREEN_BRIGHTNESS` setting if the float setting is uninitialized (`Float.NaN`) on first boot or factory reset. This prevents physical screen brightness from defaulting to 50% while the Settings App UI slider incorrectly displays 0%.
+
+
 
 
 

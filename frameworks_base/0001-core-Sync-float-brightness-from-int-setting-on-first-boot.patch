@@ -1,0 +1,50 @@
+From 49047a1b0d2712a62c08814e39a778ab23706c66 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Wed, 24 Jun 2026 02:42:26 -0700
+Subject: [PATCH] core: Sync float brightness from int setting on first boot
+
+On first boot or after a factory reset, SettingsProvider populates the database
+with a default integer value for SCREEN_BRIGHTNESS, but fails to initialize
+the new SCREEN_BRIGHTNESS_FLOAT setting.
+
+This creates a desynchronization:
+1. DisplayPowerController sees the missing float and falls back to the
+   framework default (config_screenBrightnessSettingDefaultFloat), turning
+   the physical screen brightness up to ~50%.
+2. The Settings App UI (BrightnessLevelPreferenceController) sees the
+   missing float and falls back to the minimum brightness, incorrectly
+   displaying the brightness slider at 0%.
+
+This commit patches BrightnessSynchronizer to perform an initial
+synchronization when it starts observing. If the float value is missing
+(Float.NaN), it populates it directly from the existing integer setting,
+ensuring the Settings App UI accurately reflects the physical hardware
+brightness on first boot.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Change-Id: I2a52f611d3d27389e92dde92b08e6b4c9f54d1c1
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ core/java/com/android/internal/BrightnessSynchronizer.java | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/core/java/com/android/internal/BrightnessSynchronizer.java b/core/java/com/android/internal/BrightnessSynchronizer.java
+index 8ff3c497662..7f256dea967 100644
+--- a/core/java/com/android/internal/BrightnessSynchronizer.java
++++ b/core/java/com/android/internal/BrightnessSynchronizer.java
+@@ -274,6 +274,11 @@ public class BrightnessSynchronizer{
+             cr.unregisterContentObserver(this);
+             cr.registerContentObserver(BRIGHTNESS_URI, false, this, UserHandle.USER_ALL);
+             cr.registerContentObserver(BRIGHTNESS_FLOAT_URI, false, this, UserHandle.USER_ALL);
++
++            if (Float.isNaN(getScreenBrightnessFloat(mContext))) {
++                int currentBrightness = getScreenBrightnessInt(mContext);
++                mHandler.obtainMessage(MSG_UPDATE_FLOAT, currentBrightness, 0).sendToTarget();
++            }
+         }
+ 
+         public void stopObserving() {
+-- 
+2.43.0
+
