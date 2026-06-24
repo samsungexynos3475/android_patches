@@ -4,7 +4,7 @@
 # --- LineageOS/android_frameworks_base ---
 "frameworks/base" \
   "⚙️" "Watchdog Timeout" "0001-services-Increase-watchdog-timeout-to-180s-to-prevent-.patch" \
-  "🔑" "KeyStoreException" "0002-keystore-backport-KeyStoreException-for-Android-12-compatibility.patch"
+  "🔑" "KeyStoreException" "../keystore/frameworks_base/0002-keystore-backport-KeyStoreException-for-Android-12-compatibility.patch"
 
 # --- LineageOS/android_hardware_interfaces ---
 "hardware/interfaces" "📷" "Camera" "0001-camera-Relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch"
@@ -45,4 +45,4 @@
 "system/bt" "🔵" "system_bt" "0001-btm-fix-SCO-I2S-routing-for-Android-10.patch"
 
 # --- LineageOS/android_system_security ---
-"system/security" "🔑" "Keystore" "0001-keystore-silently-upgrade-key-blobs-during-attestation-to-bypass-KEY_REQUIRES_UPGRADE-errors.patch"
+"system/security" "🔑" "Keystore" "../keystore/system_security/0001-keystore-silently-upgrade-key-blobs-during-attestation-to-bypass-KEY_REQUIRES_UPGRADE-errors.patch"
