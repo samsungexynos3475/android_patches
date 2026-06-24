@@ -28,6 +28,8 @@
   "🔋" "Battery Extender impl" "../batteryextender-eleven/hardware_samsung/0001-hidl-add-batterylifeextender-implementation.patch" \
   "🎵" "Audio auto-fade-in" "0003-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch"
 
+# --- LineageOS/android_lineage-sdk ---
+"lineage-sdk" "🎨" "Pure black dark theme" "0001-SettingsProvider-Enable-pure-black-dark-theme-by-default.patch"
 
 # --- LineageOS/android_packages_apps_Settings ---
 "packages/apps/Settings" "🔋" "Protect battery toggle" "../batteryextender-eleven/packages_apps_Settings/0001-Settings-add-Protect-battery-toggle.patch"
