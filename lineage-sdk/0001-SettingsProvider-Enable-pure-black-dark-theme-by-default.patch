@@ -1,0 +1,48 @@
+From 69e1593a444fa38f99f5795c4dc372b6a2453fd4 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Wed, 24 Jun 2026 02:59:38 -0700
+Subject: [PATCH] SettingsProvider: Enable pure black dark theme by default
+
+We want the dark mode to be pure black out-of-the-box instead
+of the default dark grey. This commit introduces the
+def_berry_black_theme boolean to the provider defaults and
+loads it into the settings database upon creation.
+
+Change-Id: I586148fc769bd1751272e360e9f99669a5bc75ec
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ packages/LineageSettingsProvider/res/values/defaults.xml       | 3 +++
+ .../org/lineageos/lineagesettings/LineageDatabaseHelper.java   | 3 +++
+ 2 files changed, 6 insertions(+)
+
+diff --git a/packages/LineageSettingsProvider/res/values/defaults.xml b/packages/LineageSettingsProvider/res/values/defaults.xml
+index 489365a4..882c1f1a 100644
+--- a/packages/LineageSettingsProvider/res/values/defaults.xml
++++ b/packages/LineageSettingsProvider/res/values/defaults.xml
+@@ -32,6 +32,9 @@
+     <!-- Default for LineageSettings.Secure.ADVANCED_MODE -->
+     <bool name="def_advanced_mode">true</bool>
+ 
++    <!-- Default value for whether to use pure black theme for dark mode -->
++    <bool name="def_berry_black_theme">true</bool>
++
+     <!-- Default for LineageSettings.Secure.STATS_COLLECTION -->
+     <bool name="def_stats_collection">false</bool>
+ 
+diff --git a/packages/LineageSettingsProvider/src/org/lineageos/lineagesettings/LineageDatabaseHelper.java b/packages/LineageSettingsProvider/src/org/lineageos/lineagesettings/LineageDatabaseHelper.java
+index 24ce1e1f..32c1c91e 100644
+--- a/packages/LineageSettingsProvider/src/org/lineageos/lineagesettings/LineageDatabaseHelper.java
++++ b/packages/LineageSettingsProvider/src/org/lineageos/lineagesettings/LineageDatabaseHelper.java
+@@ -556,6 +556,9 @@ public class LineageDatabaseHelper extends SQLiteOpenHelper{
+             stmt = db.compileStatement("INSERT OR IGNORE INTO system(name,value)"
+                     + " VALUES(?,?);");
+             // System
++            loadBooleanSetting(stmt, LineageSettings.System.BERRY_BLACK_THEME,
++                    R.bool.def_berry_black_theme);
++
+             loadIntegerSetting(stmt, LineageSettings.System.FORCE_SHOW_NAVBAR,
+                     R.integer.def_force_show_navbar);
+ 
+-- 
+2.43.0
+

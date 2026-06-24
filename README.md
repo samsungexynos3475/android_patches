@@ -99,5 +99,11 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `packages_apps_SetupWizard/0001-SetupWizard-Uncheck-Help-Improve-LineageOS-by-default.patch`
 * **Details**: Flips the default checkbox state for sending diagnostic and usage data to LineageOS in the initial setup wizard to start unchecked, requiring users to explicitly opt-in instead of opt-out.
 
+### 20. SettingsProvider Pure Black Dark Theme by Default
+* **Target Path**: `lineage-sdk`
+* **Filename**: `lineage-sdk/0001-SettingsProvider-Enable-pure-black-dark-theme-by-default.patch`
+* **Details**: Enables pure black theme for dark mode by default (instead of dark grey) on first boot/factory reset by initializing the secure database setting `berry_black_theme` to true.
+
+
 
 
