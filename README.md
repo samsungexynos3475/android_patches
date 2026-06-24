@@ -94,4 +94,10 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `packages_apps_Updater/0001-Updater-change-update-url.patch`
 * **Details**: Redirects the updater's server URL to download update definitions directly from the GitHub releases page for `samsungexynos3475/releases` on branch `lineage-17.1`, and updates the changelog and issue links to point to the corresponding GitHub repositories.
 
+### 19. SetupWizard Diagnostic Metrics Opt-Out by Default
+* **Target Path**: `packages/apps/SetupWizard`
+* **Filename**: `packages_apps_SetupWizard/0001-SetupWizard-Uncheck-Help-Improve-LineageOS-by-default.patch`
+* **Details**: Flips the default checkbox state for sending diagnostic and usage data to LineageOS in the initial setup wizard to start unchecked, requiring users to explicitly opt-in instead of opt-out.
+
+
 

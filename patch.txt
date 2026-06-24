@@ -29,6 +29,9 @@
 # --- LineageOS/android_packages_apps_PermissionController ---
 "packages/apps/PermissionController" "🛡️" "PermissionController" "0001-permissioncontroller-persistent-to-prevent-OOM-panics.patch"
 
+# --- LineageOS/android_packages_apps_SetupWizard ---
+"packages/apps/SetupWizard" "🧙" "Uncheck metrics by default" "0001-SetupWizard-Uncheck-Help-Improve-LineageOS-by-default.patch"
+
 # --- LineageOS/android_packages_apps_Trebuchet ---
 "packages/apps/Trebuchet" "🏠" "Trebuchet" "0001-trebuchet-persistent-to-prevent-OOM-panics.patch"
 

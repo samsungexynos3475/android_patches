@@ -1,0 +1,30 @@
+From 5a6e42ca6cd66accca76c32c851635470a9630fd Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Wed, 24 Jun 2026 02:53:24 -0700
+Subject: [PATCH] SetupWizard: Uncheck "Help Improve LineageOS" by default
+
+By default, the setup wizard opts users into sending diagnostic
+and usage data to LineageOS. This commit flips the default
+value so that the metrics checkbox starts unchecked.
+
+Change-Id: I5ff14b745d1a7fb01220c0f69c21eaa468s205b38
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ src/org/lineageos/setupwizard/LineageSettingsActivity.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/org/lineageos/setupwizard/LineageSettingsActivity.java b/src/org/lineageos/setupwizard/LineageSettingsActivity.java
+index e451c6b..cf9839a 100644
+--- a/src/org/lineageos/setupwizard/LineageSettingsActivity.java
++++ b/src/org/lineageos/setupwizard/LineageSettingsActivity.java
+@@ -136,7 +136,7 @@ public class LineageSettingsActivity extends BaseSetupWizardActivity {
+     private void updateMetricsOption() {
+         final Bundle myPageBundle = mSetupWizardApp.getSettingsBundle();
+         boolean metricsChecked =
+-                !myPageBundle.containsKey(KEY_SEND_METRICS) || myPageBundle
++                myPageBundle.containsKey(KEY_SEND_METRICS) && myPageBundle
+                         .getBoolean(KEY_SEND_METRICS);
+         mMetrics.setChecked(metricsChecked);
+         myPageBundle.putBoolean(KEY_SEND_METRICS, metricsChecked);
+-- 
+2.43.0
