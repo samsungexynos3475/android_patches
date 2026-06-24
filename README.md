@@ -89,3 +89,9 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `system_security/0001-keystore-silently-upgrade-key-blobs-during-attestation-to-bypass-KEY_REQUIRES_UPGRADE-errors.patch`
 * **Details**: Intercepts KEY_REQUIRES_UPGRADE errors during attestKey and silently upgrades the keyblobs, bypassing attestation failures on legacy devices where TrustZone patch level differs from OS properties.
 
+### 18. LineageOS Updater Custom Server URL and Changelog
+* **Target Path**: `packages/apps/Updater`
+* **Filename**: `packages_apps_Updater/0001-Updater-change-update-url.patch`
+* **Details**: Redirects the updater's server URL to download update definitions directly from the GitHub releases page for `samsungexynos3475/releases` on branch `lineage-17.1`, and updates the changelog and issue links to point to the corresponding GitHub repositories.
+
+
