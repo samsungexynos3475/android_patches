@@ -22,7 +22,9 @@
 "hardware/samsung" \
   "💡" "Light HAL" "0001-hidl-light-cache-max_brightness-during-initialization.patch" \
   "🎵" "BT SCO routing" "0002-samsung-audio-Restore-BT-SCO-VoIP-and-Cellular-routing.patch" \
-  "🔋" "Battery Extender impl" "../batteryextender-eleven/hardware_samsung/0001-hidl-add-batterylifeextender-implementation.patch"
+  "🔋" "Battery Extender impl" "../batteryextender-eleven/hardware_samsung/0001-hidl-add-batterylifeextender-implementation.patch" \
+  "🎵" "Audio auto-fade-in" "0003-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch"
+
 
 # --- LineageOS/android_packages_apps_Settings ---
 "packages/apps/Settings" "🔋" "Protect battery toggle" "../batteryextender-eleven/packages_apps_Settings/0001-Settings-add-Protect-battery-toggle.patch"

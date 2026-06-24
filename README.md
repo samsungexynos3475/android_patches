@@ -69,5 +69,11 @@ This branch contains custom hardware patches for LineageOS 18.1 on Exynos 3475 d
 * **Filename**: `packages_apps_Updater/0001-Updater-change-update-url.patch`
 * **Details**: Redirects the updater's server URL to download update definitions directly from the GitHub releases page for `samsungexynos3475/releases` on branch `lineage-18.1`, and updates the changelog and issue links to point to the corresponding GitHub repositories.
 
+### 14. Samsung Audio Auto-Fade-In Workaround
+* **Target Path**: `hardware/samsung`
+* **Filename**: `hardware_samsung/0003-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch`
+* **Details**: Monitors the PCM buffer for silence (>100ms) and applies a smooth 280ms software fade-in when audio resumes, suppressing initial loud blasts/pops caused by AudioFlinger volume setup delays on headsets and other outputs (excluding the built-in speaker).
+
+
 
 
