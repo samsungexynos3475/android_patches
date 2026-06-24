@@ -1,0 +1,45 @@
+From 8ccff7f49d02e0cef3deca5d140442ca3ecfc8bb Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Tue, 23 Jun 2026 20:39:26 -0700
+Subject: [PATCH] Updater: change update url
+
+Change-Id: Ie76c20b02c310b1a3c3f705fa503eb5a0adf14f4
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ res/values/strings.xml | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index bfb2627..7ec3806 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -32,7 +32,7 @@
+           {type} - Build type
+           {incr} - Incremental version
+     -->
+-    <string name="updater_server_url" translatable="false">https://download.lineageos.org/api/v1/{device}/{type}/{incr}</string>
++    <string name="updater_server_url" translatable="false">https://raw.githubusercontent.com/samsungexynos3475/releases/lineage-18.1/{device}.json</string>
+ 
+     <string name="verification_failed_notification">Verification failed</string>
+     <string name="verifying_download_notification">Verifying update</string>
+@@ -75,7 +75,7 @@
+     <string name="menu_copy_url">Copy URL</string>
+     <string name="menu_export_update">Export update</string>
+     <string name="menu_show_changelog">Show changelog</string>
+-    <string name="menu_changelog_url" translatable="false">https://download.lineageos.org/<xliff:g id="device_name">%1$s</xliff:g>/changes</string>
++    <string name="menu_changelog_url" translatable="false">https://github.com/samsungexynos3475/releases/releases</string>
+     <string name="menu_ab_perf_mode">Prioritize update process</string>
+     <string name="menu_update_recovery">Update recovery</string>
+     <string name="toast_forced_update_recovery">It is impossible to disable Lineage Recovery updates on this device.</string>
+@@ -147,7 +147,7 @@
+ 
+     <string name="blocked_update_dialog_title">Update blocked</string>
+     <string name="blocked_update_dialog_message">This update cannot be installed using the updater app.  Please read <xliff:g id="info_url">%1$s</xliff:g> for more information.</string>
+-    <string name="blocked_update_info_url" translatable="false">http://wiki.lineageos.org/devices/<xliff:g id="device_name">%1$s</xliff:g>/upgrade</string>
++    <string name="blocked_update_info_url" translatable="false">https://github.com/samsungexynos3475/releases/issues</string>
+ 
+     <string name="export_channel_title">Export completion</string>
+     <string name="new_updates_channel_title">New updates</string>
+-- 
+2.43.0
+

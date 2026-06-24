@@ -64,4 +64,10 @@ This branch contains custom hardware patches for LineageOS 18.1 on Exynos 3475 d
 * **Filename**: `batteryextender-eleven/packages_apps_Settings/0001-Settings-add-Protect-battery-toggle.patch`
 * **Details**: Adds a "Protect battery" toggle switch to the Settings application under the Battery usage summary page, linked to the `BatteryLifeExtenderPreferenceController` which interfaces with the `IBatteryLifeExtender` HIDL service.
 
+### 13. LineageOS Updater Custom Server URL and Changelog
+* **Target Path**: `packages/apps/Updater`
+* **Filename**: `packages_apps_Updater/0001-Updater-change-update-url.patch`
+* **Details**: Redirects the updater's server URL to download update definitions directly from the GitHub releases page for `samsungexynos3475/releases` on branch `lineage-18.1`, and updates the changelog and issue links to point to the corresponding GitHub repositories.
+
+
 

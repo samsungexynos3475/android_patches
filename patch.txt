@@ -27,5 +27,9 @@
 # --- LineageOS/android_packages_apps_Settings ---
 "packages/apps/Settings" "🔋" "Protect battery toggle" "../batteryextender-eleven/packages_apps_Settings/0001-Settings-add-Protect-battery-toggle.patch"
 
+# --- LineageOS/android_packages_apps_Updater ---
+"packages/apps/Updater" "🔄" "Updater custom URL" "0001-Updater-change-update-url.patch"
+
 # --- LineageOS/android_system_bt ---
 "system/bt" "🔵" "system_bt" "0001-btm-fix-SCO-I2S-routing-for-Android-10.patch"
+
