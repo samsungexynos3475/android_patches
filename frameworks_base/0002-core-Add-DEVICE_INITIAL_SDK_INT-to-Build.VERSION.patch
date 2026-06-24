@@ -1,0 +1,46 @@
+From a60c8c0d7261edb04f03054f03fe6b5709102f25 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Wed, 24 Jun 2026 07:08:33 -0700
+Subject: [PATCH] core: Add DEVICE_INITIAL_SDK_INT to Build.VERSION
+
+Android 12 (API 31) introduced DEVICE_INITIAL_SDK_INT in Build.VERSION.
+Certain Zygisk modules, such as PlayIntegrityFix and Tricky Store,
+attempt to read this field via reflection to spoof hardware attestation.
+
+On Android 11 (API 30), this field does not exist, which causes these
+modules to throw a java.lang.NoSuchFieldError, ultimately crashing
+core system processes like com.android.vending (Play Store).
+
+This patch adds DEVICE_INITIAL_SDK_INT and points it to FIRST_SDK_INT,
+backporting the expected Android 12 API surface to prevent Zygisk
+modules from triggering fatal crashes.
+
+Change-Id: I4023b30e282880e460f30622991896ce6f72a7c2
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ core/java/android/os/Build.java | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/core/java/android/os/Build.java b/core/java/android/os/Build.java
+index 8c6fca50fa8..38cc3a7fb5f 100755
+--- a/core/java/android/os/Build.java
++++ b/core/java/android/os/Build.java
+@@ -309,6 +309,15 @@ public class Build {
+         public static final int FIRST_SDK_INT = SystemProperties
+                 .getInt("ro.product.first_api_level", 0);
+ 
++        /**
++         * The SDK version of the software that <em>initially</em> shipped on
++         * this hardware device.
++         *
++         * @hide
++         */
++        @TestApi
++        public static final int DEVICE_INITIAL_SDK_INT = FIRST_SDK_INT;
++
+         /**
+          * The developer preview revision of a prerelease SDK. This value will always
+          * be <code>0</code> on production platform builds/devices.
+-- 
+2.43.0
+

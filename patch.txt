@@ -5,7 +5,10 @@
 "frameworks/av" "🎥" "cameraserver: relax VideoNativeHandleMetadata size validation" "0001-cameraserver-relax-VideoNativeHandleMetadata-size-validation-for-legacy-HALs.patch"
 
 # --- LineageOS/android_frameworks_base ---
-"frameworks/base" "⚙️" "Brightness float sync" "0001-core-Sync-float-brightness-from-int-setting-on-first-boot.patch"
+"frameworks/base" \
+  "⚙️" "Brightness float sync" "0001-core-Sync-float-brightness-from-int-setting-on-first-boot.patch" \
+  "⚙️" "DEVICE_INITIAL_SDK_INT" "0002-core-Add-DEVICE_INITIAL_SDK_INT-to-Build.VERSION.patch"
+
 
 # --- LineageOS/android_hardware_broadcom_libbt ---
 "hardware/broadcom/libbt" "🔵" "libbt" "0001-libbt-Ensure-complete-I2S-PCM-initialization-sequence.patch"

@@ -89,6 +89,12 @@ This branch contains custom hardware patches for LineageOS 18.1 on Exynos 3475 d
 * **Filename**: `lineage-sdk/0001-SettingsProvider-Enable-pure-black-dark-theme-by-default.patch`
 * **Details**: Enables pure black theme for dark mode by default (instead of dark grey) on first boot/factory reset by initializing the secure database setting `berry_black_theme` to true.
 
+### 18. Build.VERSION DEVICE_INITIAL_SDK_INT Field Backport
+* **Target Path**: `frameworks/base`
+* **Filename**: `frameworks_base/0002-core-Add-DEVICE_INITIAL_SDK_INT-to-Build.VERSION.patch`
+* **Details**: Backports the `Build.VERSION.DEVICE_INITIAL_SDK_INT` field introduced in Android 12 to Android 11. This prevents Zygisk/root hiding modules (e.g. PlayIntegrityFix and Tricky Store) from throwing `NoSuchFieldError` and crashing system apps like the Google Play Store.
+
+
 
 
 
