@@ -9,101 +9,42 @@ This branch contains the patch files for LineageOS 17.1 on Exynos 3475 devices. 
 * **Filename**: `frameworks_av/0001-Camera-stagefright-Resolve-video-recording-freezes-and-color.patch`
 * **Details**: Resolves freezes and color format issues during video recording under Stagefright.
 
-### 2. Camera Metadata Buffer Size Relaxation
-* **Target Path**: `hardware/interfaces`
-* **Filename**: `hardware_interfaces/0001-camera-Relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch`
-* **Details**: Relaxes the buffer size safety checks in `sDataCbTimestamp` to allow legacy camera HALs to function correctly.
-
-### 3. Bluetooth Service Fix (Watchdog Timeout Extension)
+### 2. Bluetooth Service Fix (Watchdog Timeout Extension)
 * **Target Path**: `packages/apps/Bluetooth`
 * **Filename**: `packages_apps_Bluetooth/0001-AdapterState-Increase-BLE-and-BREDR-start-watchdog-timeouts.patch`
 * **Details**: Extends Java-side startup watchdog timeouts to 150s (coordinating with a 1000ms UART firmware delay and 150s native stack timeout) to prevent transitional-state hangs and crash loops under high CPU load.
 
-### 4. UnifiedEmail Setup Inflation Crash Fix
+### 3. UnifiedEmail Setup Inflation Crash Fix
 * **Target Path**: `packages/apps/UnifiedEmail`
 * **Filename**: `packages_apps_UnifiedEmail/0001-UnifiedEmail-Replace-incompatible-bitmap-drawables.patch`
 * **Details**: Replaces incompatible `<bitmap>` wrapping of vector drawables with `<layer-list>` to resolve runtime `InflateException` crashes during account setup.
 
-### 5. LineageOS Touch HAL Interface Declaration Fix
+### 4. Samsung Audio Auto-Fade-In Workaround
 * **Target Path**: `hardware/samsung`
-* **Filename**: `hardware_samsung/0001-samsung-hidl-Add-missing-touch-interface-declaration-to-init-script.patch`
-* **Details**: Adds missing HIDL interface declaration to Touch HAL init script to resolve `system_server` watchdog bootloops in Enforcing mode.
-
-### 6. libv4l2 cameraserver Freeze Fix
-* **Target Path**: `hardware/samsung_slsi/exynos`
-* **Filename**: `hardware_samsung_slsi_exynos/0001-libv4l2-Prevent-infinite-loop-when-fopen-fails-due-to-SELinux-denial.patch`
-* **Details**: Increments the node index during sysfs video node queries when `fopen` fails, preventing cameraserver infinite loops/freezes due to SELinux denials.
-
-### 7. gralloc CMA Heap uncached Allocation Workaround
-* **Target Path**: `hardware/samsung_slsi/exynos`
-* **Filename**: `hardware_samsung_slsi_exynos/0002-gralloc-Strip-ION_FLAG_CACHED-for-CMA-carveout-alloc.patch`
-* **Details**: Strips `ION_FLAG_CACHED` flags when allocating from the CMA carveout heap (`ION_HEAP_EXYNOS_CONTIG_MASK`) to prevent `-EINVAL` allocation failures and fix black screens in the camera preview.
-
-### 8. Samsung Audio Auto-Fade-In Workaround
-* **Target Path**: `hardware/samsung`
-* **Filename**: `hardware_samsung/0002-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch`
+* **Filename**: `hardware_samsung/0001-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch`
 * **Details**: Monitors the PCM buffer for silence (>100ms) and applies a smooth 400ms software fade-in when audio resumes, suppressing initial loud blasts/pops caused by AudioFlinger volume setup delays.
 
-### 9. Broadcom libbt I2S/PCM Initialization Sequence configuration
-* **Target Path**: `hardware/broadcom/libbt`
-* **Filename**: `hardware_broadcom_libbt/0001-libbt-Ensure-complete-I2S-PCM-initialization-sequence.patch`
-* **Details**: Ensures complete I2S/PCM initialization sequence by sending both PCM parameter and format commands in I2S mode.
-
-### 10. btm SCO I2S routing configuration for Android 10
+### 5. btm SCO I2S routing configuration for Android 10
 * **Target Path**: `system/bt`
 * **Filename**: `system_bt/0001-btm-fix-SCO-I2S-routing-for-Android-10.patch`
 * **Details**: Injects Broadcom VSC initialization commands into `btm_send_connect_request` to configure the PCM/I2S interface for the s2803x codec.
 
-### 11. Samsung Audio BT SCO VoIP and Cellular routing restoration
-* **Target Path**: `hardware/samsung`
-* **Filename**: `hardware_samsung/0003-samsung-audio-Restore-BT-SCO-VoIP-and-Cellular-routing.patch`
-* **Details**: Restores BT SCO VoIP and cellular routing by opening card 0 device 3 (Bluetooth AIF3 interface) independently.
-
-### 12. Watchdog Timeout Extension
+### 6. Watchdog Timeout Extension
 * **Target Path**: `frameworks/base`
-* **Filename**: `frameworks_base/0001-server-Increase-watchdog-timeout-to-180s-to-prevent-.patch`
+* **Filename**: `frameworks_base/0001-services-Increase-watchdog-timeout-to-180s-to-prevent-.patch`
 * **Details**: Increases Watchdog timeout to 180s to prevent false-positive system_server watchdog panics on low RAM devices under memory pressure.
 
-### 13. PermissionController Persistence
-* **Target Path**: `packages/apps/PermissionController`
-* **Filename**: `packages_apps_PermissionController/0001-permissioncontroller-persistent-to-prevent-OOM-panics.patch`
-* **Details**: Marks PermissionController as persistent to prevent OOM kills under low-RAM stress.
-
-### 14. Trebuchet Persistence
-* **Target Path**: `packages/apps/Trebuchet`
-* **Filename**: `packages_apps_Trebuchet/0001-trebuchet-persistent-to-prevent-OOM-panics.patch`
-* **Details**: Marks Trebuchet (Launcher) as persistent to prevent background launcher recreation lags and OOM kills.
-
-### 15. ExtServices Persistence
-* **Target Path**: `packages/modules/ExtServices`
-* **Filename**: `packages_modules_ExtServices/0001-extservices-persistent-to-prevent-OOM-panics.patch`
-* **Details**: Marks ExtServices as persistent to prevent OOM kills under low-RAM stress.
-
-### 16. Keystore KeyStoreException backport for Android 12 compatibility
+### 7. Keystore KeyStoreException backport for Android 12 compatibility
 * **Target Path**: `frameworks/base`
 * **Filename**: `frameworks_base/0002-keystore-backport-KeyStoreException-for-Android-12-compatibility.patch`
 * **Details**: Backports the Android 12 KeyStoreException class and Build.VERSION_CODES.DEVICE_INITIAL_SDK_INT field to allow modern keystore daemons (like TEESimulator) to initialize without throwing ClassNotFoundException on legacy Android 10.
 
-### 17. Keystore Silent KeyBlob Upgrade during Attestation
+### 8. Keystore Silent KeyBlob Upgrade during Attestation
 * **Target Path**: `system/security`
 * **Filename**: `system_security/0001-keystore-silently-upgrade-key-blobs-during-attestation-to-bypass-KEY_REQUIRES_UPGRADE-errors.patch`
 * **Details**: Intercepts KEY_REQUIRES_UPGRADE errors during attestKey and silently upgrades the keyblobs, bypassing attestation failures on legacy devices where TrustZone patch level differs from OS properties.
 
-### 18. LineageOS Updater Custom Server URL and Changelog
-* **Target Path**: `packages/apps/Updater`
-* **Filename**: `packages_apps_Updater/0001-Updater-change-update-url.patch`
-* **Details**: Redirects the updater's server URL to download update definitions directly from the GitHub releases page for `samsungexynos3475/releases` on branch `lineage-17.1`, and updates the changelog and issue links to point to the corresponding GitHub repositories.
-
-### 19. SetupWizard Diagnostic Metrics Opt-Out by Default
-* **Target Path**: `packages/apps/SetupWizard`
-* **Filename**: `packages_apps_SetupWizard/0001-SetupWizard-Uncheck-Help-Improve-LineageOS-by-default.patch`
-* **Details**: Flips the default checkbox state for sending diagnostic and usage data to LineageOS in the initial setup wizard to start unchecked, requiring users to explicitly opt-in instead of opt-out.
-
-### 20. SettingsProvider Pure Black Dark Theme by Default
+### 9. SettingsProvider Pure Black Dark Theme by Default
 * **Target Path**: `lineage-sdk`
 * **Filename**: `lineage-sdk/0001-SettingsProvider-Enable-pure-black-dark-theme-by-default.patch`
 * **Details**: Enables pure black theme for dark mode by default (instead of dark grey) on first boot/factory reset by initializing the secure database setting `berry_black_theme` to true.
-
-
-
-
