@@ -1,0 +1,60 @@
+From 3b55a752fbf1218b9267bc09ad0ede22e9d74a5f Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Sun, 28 Jun 2026 05:37:36 -0700
+Subject: [PATCH] renderengine: remove EGL requirement for legacy GPUs
+
+In Android 10+, SurfaceFlinger's RenderEngine enforces a strict requirement
+where the device's EGL driver must advertise support for the
+`EGL_RECORDABLE_ANDROID` extension (used for Wi-Fi display mirroring).
+
+Legacy devices, such as those using the Exynos 3475 with an older
+Android 5.1/7.1 Mali-T720 GPU driver, physically do not support or expose
+this extension. When SurfaceFlinger queries the EGL config with this flag,
+it fails to find any matching configurations, triggering a fatal abort:
+"no suitable EGLConfig found, giving up". This results in a continuous
+bootloop at the LineageOS logo before the system UI can load.
+
+This patch removes the `EGL_RECORDABLE_ANDROID` attribute from the EGL
+configuration query in both `GLESRenderEngine` and `SkiaGLRenderEngine`.
+By dropping this hard requirement, legacy GPUs are allowed to successfully
+select a fallback configuration, properly initializing SurfaceFlinger and
+allowing the device to boot into the Android UI.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Change-Id: I73c2dc3252bdacf5162f7a551aeb05e1400dbcab
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ libs/renderengine/gl/GLESRenderEngine.cpp     | 2 --
+ libs/renderengine/skia/SkiaGLRenderEngine.cpp | 2 --
+ 2 files changed, 4 deletions(-)
+
+diff --git a/libs/renderengine/gl/GLESRenderEngine.cpp b/libs/renderengine/gl/GLESRenderEngine.cpp
+index 467f848..5156b2f 100644
+--- a/libs/renderengine/gl/GLESRenderEngine.cpp
++++ b/libs/renderengine/gl/GLESRenderEngine.cpp
+@@ -185,8 +185,6 @@ static status_t selectEGLConfig(EGLDisplay display, EGLint format, EGLint render
+         const EGLint tmpAttribs[] = {
+                 EGL_RENDERABLE_TYPE,
+                 renderableType,
+-                EGL_RECORDABLE_ANDROID,
+-                EGL_TRUE,
+                 EGL_SURFACE_TYPE,
+                 EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
+                 EGL_FRAMEBUFFER_TARGET_ANDROID,
+diff --git a/libs/renderengine/skia/SkiaGLRenderEngine.cpp b/libs/renderengine/skia/SkiaGLRenderEngine.cpp
+index e42b5b9..c533630 100644
+--- a/libs/renderengine/skia/SkiaGLRenderEngine.cpp
++++ b/libs/renderengine/skia/SkiaGLRenderEngine.cpp
+@@ -119,8 +119,6 @@ static status_t selectEGLConfig(EGLDisplay display, EGLint format, EGLint render
+         const EGLint tmpAttribs[] = {
+                 EGL_RENDERABLE_TYPE,
+                 renderableType,
+-                EGL_RECORDABLE_ANDROID,
+-                EGL_TRUE,
+                 EGL_SURFACE_TYPE,
+                 EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
+                 EGL_FRAMEBUFFER_TARGET_ANDROID,
+-- 
+2.43.0
+

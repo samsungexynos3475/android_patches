@@ -1,0 +1,84 @@
+From 5eaf676defbda3d627782740da6b6a222923e915 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Sun, 5 Jul 2026 22:13:25 -0700
+Subject: [PATCH] netd: bypass eBPF requirement for legacy Exynos RIL
+
+Adapt some change from LineageOS-UL:
+- `Ignore netd errors for < 4.9 kernels` (e3c9266d2c149f02704268c3a5a0fe1f78b5ae3b)
+
+Change-Id: I75a736833709140ca514deb4fb16cd3c64f90480
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ server/Controllers.cpp        |  2 +-
+ server/FirewallController.cpp |  2 +-
+ server/RouteController.cpp    | 21 +++++++++++++++++++--
+ 3 files changed, 21 insertions(+), 4 deletions(-)
+
+diff --git a/server/Controllers.cpp b/server/Controllers.cpp
+index 1f2bac2..b0e11dc 100644
+--- a/server/Controllers.cpp
++++ b/server/Controllers.cpp
+@@ -283,7 +283,7 @@ void Controllers::init() {
+     gLog.info("Initializing ClatdController: %" PRId64 "us", s.getTimeAndResetUs());
+ 
+     netdutils::Status tcStatus = trafficCtrl.start();
+-    if (!isOk(tcStatus)) {
++    if (0) {
+         gLog.error("Failed to start trafficcontroller: (%s)", toString(tcStatus).c_str());
+         gLog.error("CRITICAL: sleeping 60 seconds, netd exiting with failure, crash loop likely!");
+         // The expected reason we get here is a major kernel or other code bug, as such
+diff --git a/server/FirewallController.cpp b/server/FirewallController.cpp
+index 35fd1e2..f771bf6 100644
+--- a/server/FirewallController.cpp
++++ b/server/FirewallController.cpp
+@@ -93,7 +93,7 @@ int FirewallController::setupIptablesHooks(void) {
+     int res = flushRules();
+ 
+     // mUseBpfOwnerMatch should be removed, but it is still depended upon by test code.
+-    mUseBpfOwnerMatch = true;
++    mUseBpfOwnerMatch = false;
+     if (mUseBpfOwnerMatch) {
+         return res;
+     }
+diff --git a/server/RouteController.cpp b/server/RouteController.cpp
+index ba305e6..8c070db 100644
+--- a/server/RouteController.cpp
++++ b/server/RouteController.cpp
+@@ -1160,6 +1160,12 @@ int RouteController::Init(unsigned localNetId) {
+     if (int ret = addUnreachableRule()) {
+         return ret;
+     }
++
++    // Add Android 12 fallback route for legacy kernels without eBPF (uid 0 traffic to main table)
++    if (int ret = modifyIpRule(RTM_NEWRULE, 30000, 254, 0x0, 0xffff, IIF_NONE, OIF_NONE, 0, 0)) {
++        ALOGE("Failed to add legacy BPF fallback rule: %s", strerror(-ret));
++    }
++
+     // Don't complain if we can't add the dummy network, since not all devices support it.
+     configureDummyNetwork();
+ 
+@@ -1285,8 +1291,19 @@ int RouteController::removeInterfaceFromDefaultNetwork(const char* interface,
+ 
+ int RouteController::addRoute(const char* interface, const char* destination, const char* nexthop,
+                               TableType tableType, int mtu) {
+-    return modifyRoute(RTM_NEWROUTE, NETLINK_ROUTE_CREATE_FLAGS, interface, destination, nexthop,
+-                       tableType, mtu);
++    if (nexthop != nullptr && nexthop[0] != '\0' && destination != nullptr &&
++        (!strcmp(destination, "0.0.0.0/0") || !strcmp(destination, "::/0"))) {
++        modifyRoute(RTM_NEWROUTE, NETLINK_ROUTE_CREATE_FLAGS, interface, nexthop, nullptr,
++                    tableType, 0);
++    }
++    int ret = modifyRoute(RTM_NEWROUTE, NETLINK_ROUTE_CREATE_FLAGS, interface, destination, nexthop,
++                          tableType, mtu);
++    if (ret == -ENETUNREACH && nexthop != nullptr && nexthop[0] != '\0') {
++        ALOGW("kernel rejected route with gateway %s, falling back to device route", nexthop);
++        ret = modifyRoute(RTM_NEWROUTE, NETLINK_ROUTE_CREATE_FLAGS, interface, destination, nullptr,
++                          tableType, mtu);
++    }
++    return ret;
+ }
+ 
+ int RouteController::removeRoute(const char* interface, const char* destination,
+-- 
+2.43.0
+

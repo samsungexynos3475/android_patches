@@ -1,0 +1,30 @@
+From ac00955c0999ad03350d05228c6d6b87a5fc1233 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Fri, 26 Jun 2026 08:18:13 -0700
+Subject: [PATCH] interfaces: camera: fix undeclared F_DUPFD_CLOEXEC identifier
+
+Android 12's standard library header cleanup removed implicit inclusions of `<fcntl.h>` in several Android framework headers. Because the legacy 1.0 Camera wrapper relies on `F_DUPFD_CLOEXEC`, compilation fails without the explicit `#include <fcntl.h>`. This patch adds the missing header.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Change-Id: If1c51a94f885c729046f719377d8aaf2e3bfd5d4
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ camera/device/1.0-legacy/CameraDevice.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/camera/device/1.0-legacy/CameraDevice.cpp b/camera/device/1.0-legacy/CameraDevice.cpp
+index f324e45..360dedf 100644
+--- a/camera/device/1.0-legacy/CameraDevice.cpp
++++ b/camera/device/1.0-legacy/CameraDevice.cpp
+@@ -18,6 +18,7 @@
+ #include <hardware/camera.h>
+ #include <hardware/gralloc1.h>
+ #include <hidlmemory/mapping.h>
++#include <fcntl.h>
+ #include <log/log.h>
+ #include <utils/Trace.h>
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,35 @@
+From d234dd50163bda396c99ee8fd0de0ba381eb22a0 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Thu, 2 Jul 2026 09:00:42 -0700
+Subject: [PATCH] generated_kernel_includes: auto-create output directory
+
+Android 12's Soong build system uses SBOX for generating kernel includes, which executes
+`make headers_install` with an output directory (`O=.../gen`) that hasn't been created yet.
+Because the 3.10 kernel strictly asserts that the output directory must exist
+before execution, the build fails.
+
+This patch adds a simple `mkdir -p` to auto-create the output directory,
+fixing the `generated_kernel_includes` failure.
+
+Change-Id: Ieb9ba74372942fea02dbf124862338e386863798
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ build/soong/Android.bp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/build/soong/Android.bp b/build/soong/Android.bp
+index c549c34..4465897 100644
+--- a/build/soong/Android.bp
++++ b/build/soong/Android.bp
+@@ -21,7 +21,7 @@ lineage_generator {
+     name: "generated_kernel_includes",
+ 
+     // The headers make command
+-    cmd: "$(PATH_OVERRIDE_SOONG) $(KERNEL_MAKE_CMD) $(KERNEL_MAKE_FLAGS) -C $(TARGET_KERNEL_SOURCE) O=$(KERNEL_BUILD_OUT_PREFIX)$(genDir) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) headers_install",
++    cmd: "mkdir -p $(KERNEL_BUILD_OUT_PREFIX)$(genDir) && $(PATH_OVERRIDE_SOONG) $(KERNEL_MAKE_CMD) $(KERNEL_MAKE_FLAGS) -C $(TARGET_KERNEL_SOURCE) O=$(KERNEL_BUILD_OUT_PREFIX)$(genDir) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) headers_install",
+ 
+     // Directories that can be imported by a cc_* module generated_headers property
+     export_include_dirs: [
+-- 
+2.43.0
+

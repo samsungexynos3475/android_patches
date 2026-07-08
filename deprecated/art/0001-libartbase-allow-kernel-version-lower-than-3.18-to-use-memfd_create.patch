@@ -1,0 +1,34 @@
+From 6c84022c11b3fdb2581e85d8f4fc9f3d8f2d4c4e Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Sun, 28 Jun 2026 15:41:56 -0700
+Subject: [PATCH] libartbase: allow kernel version lower than 3.18 to use memfd_create
+
+Change-Id: I367a02de633f95e1fb41da5f57e254063dbe6296
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ libartbase/base/memfd.cc | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/libartbase/base/memfd.cc b/libartbase/base/memfd.cc
+index 8512a3a..1324379 100644
+--- a/libartbase/base/memfd.cc
++++ b/libartbase/base/memfd.cc
+@@ -51,14 +51,11 @@ namespace art {
+ int memfd_create(const char* name, unsigned int flags) {
+   // Check kernel version supports memfd_create(). Some older kernels segfault executing
+   // memfd_create() rather than returning ENOSYS (b/116769556).
+-  static constexpr int kRequiredMajor = 3;
+-  static constexpr int kRequiredMinor = 17;
+   struct utsname uts;
+   int major, minor;
+   if (uname(&uts) != 0 ||
+       strcmp(uts.sysname, "Linux") != 0 ||
+-      sscanf(uts.release, "%d.%d", &major, &minor) != 2 ||
+-      (major < kRequiredMajor || (major == kRequiredMajor && minor < kRequiredMinor))) {
++      sscanf(uts.release, "%d.%d", &major, &minor) != 2) {
+     errno = ENOSYS;
+     return -1;
+   }
+-- 
+2.43.0
+

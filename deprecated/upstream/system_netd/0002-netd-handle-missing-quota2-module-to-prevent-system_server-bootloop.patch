@@ -1,0 +1,90 @@
+From e662a8e738810d16c22422142392af2269c4ed48 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Mon, 6 Jul 2026 04:05:09 -0700
+Subject: [PATCH] netd: handle missing quota2 module to prevent system_server
+ bootloop
+
+On legacy kernels (like 3.10), the `quota2` iptables module is
+unavailable. When Android 12 attempts to set interface data limits
+on mobile data (e.g., rmnet0), `iptables-restore` fails on the
+quota rule:
+
+-A bw_costly_rmnet0 -m quota2 ! --quota 9223372036854775807 --name rmnet0 -j REJECT
+
+This failure propagates up through `netd` as a Remote I/O error
+(code 121) during `bandwidthSetInterfaceQuota`. Because the framework's
+`NetworkPolicyManagerService` is not designed to handle this specific
+failure gracefully, it throws an `IllegalStateException` and completely
+crashes `system_server`:
+
+E NetworkPolicy: java.lang.IllegalStateException: android.os.ServiceSpecificException: Remote I/O error (code 121)
+E NetworkPolicy:   at com.android.server.NetworkManagementService.setInterfaceQuota
+E NetworkPolicy:   at com.android.server.net.NetworkPolicyManagerService.setInterfaceLimit
+
+This crash results in a permanent bootloop as soon as the device
+attempts to connect to mobile data.
+
+This commit patches netd to gracefully handle or bypass the quota2
+failure, preventing the fatal exception from reaching the framework
+and allowing legacy devices to boot successfully.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Change-Id: I044a6beabd9e60493a0f377a9ec26879f28fc51e
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ server/BandwidthController.cpp | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/server/BandwidthController.cpp b/server/BandwidthController.cpp
+index 1b46234..4903de3 100644
+--- a/server/BandwidthController.cpp
++++ b/server/BandwidthController.cpp
+@@ -498,7 +498,7 @@ int BandwidthController::setInterfaceQuota(const std::string& iface, int64_t max
+     if (iptablesRestoreFunction(V4V6, Join(cmds, "\n"), nullptr) != 0) {
+         ALOGE("Failed set quota rule");
+         removeInterfaceQuota(iface);
+-        return -EREMOTEIO;
++        return 0; // Legacy hack
+     }
+ 
+     mQuotaIfaces[iface] = QuotaInfo{maxBytes, 0};
+@@ -557,7 +557,7 @@ int BandwidthController::removeInterfaceQuota(const std::string& iface) {
+         mQuotaIfaces.erase(it);
+     }
+ 
+-    return res ? -EREMOTEIO : 0;
++    return 0; // Legacy hack
+ }
+ 
+ int BandwidthController::updateQuota(const std::string& quotaName, int64_t bytes) {
+@@ -614,7 +614,7 @@ int BandwidthController::setGlobalAlert(int64_t bytes) {
+     } else {
+         res = runIptablesAlertCmd(IptOpInsert, alertName, bytes);
+         if (res) {
+-            res = -EREMOTEIO;
++            res = 0; // Legacy hack
+         }
+     }
+     mGlobalAlertBytes = bytes;
+@@ -715,7 +715,7 @@ int BandwidthController::setCostlyAlert(const std::string& costName, int64_t byt
+         res = iptablesRestoreFunction(V4V6, Join(commands, ""), nullptr);
+         if (res) {
+             ALOGE("Failed to set costly alert for %s", costName.c_str());
+-            res = -EREMOTEIO;
++            res = 0; // Legacy hack
+         }
+     }
+     if (res == 0) {
+@@ -744,7 +744,7 @@ int BandwidthController::removeCostlyAlert(const std::string& costName, int64_t*
+     };
+     if (iptablesRestoreFunction(V4V6, Join(commands, ""), nullptr) != 0) {
+         ALOGE("Failed to remove costly alert %s", costName.c_str());
+-        return -EREMOTEIO;
++        return 0; // Legacy hack
+     }
+ 
+     *alertBytes = 0;
+-- 
+2.43.0
+

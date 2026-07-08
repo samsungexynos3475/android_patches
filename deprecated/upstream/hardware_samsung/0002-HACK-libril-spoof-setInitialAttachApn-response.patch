@@ -1,0 +1,76 @@
+From 15367adaf3d5d9175f488486bbb4050f733831e4 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Tue, 7 Jul 2026 05:09:30 -0700
+Subject: [PATCH] HACK: libril: spoof setInitialAttachApn response
+
+On Android 12, the framework strictly rejects a -1 value for MCC/MNC
+when querying DATA_REGISTRATION_STATE. Because legacy Samsung modems
+do not provide these values, the wrapper previously filled them with -1.
+This new strictness causes the framework to silently convert the
+network's PLMN identity to null.
+
+During boot, the framework attempts to configure mobile data automatically
+via SET_INITIAL_ATTACH_APN. Because the PLMN is null, it passes an empty
+string to the modem. The proprietary modem fails to parse this, throws
+a fatal error ("IsAllRatAndCTC: mccmnc = "), and disables its internal
+network interface. This leaves the device in a disconnected limbo state
+and causes NullPointerExceptions in com.android.phone.
+
+This commit resolves the issue by safely bypassing the broken sequence:
+
+- Intercept the `setInitialAttachApn` method.
+  Instead of passing the malformed command down to the legacy modem,
+  generate and return a fake "Success" (RadioError::NONE) response
+  back to the framework.
+- This prevents the modem from receiving the empty string and crashing,
+  allowing the framework to safely fall back and connect using a
+  standard SETUP_DATA_CALL.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Change-Id: I3e832e1ec2a7fb50a2a301022931f2d3284c6792
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ ril/libril/ril_service.cpp | 18 +++++++++++++-----
+ 1 file changed, 13 insertions(+), 5 deletions(-)
+
+diff --git a/ril/libril/ril_service.cpp b/ril/libril/ril_service.cpp
+index 409fa33..a935a76 100644
+--- a/ril/libril/ril_service.cpp
++++ b/ril/libril/ril_service.cpp
+@@ -1920,12 +1920,19 @@ Return<void> RadioImpl::setInitialAttachApn(int32_t serial, const DataProfileInf
+ #if VDBG
+     RLOGD("setInitialAttachApn: serial %d", serial);
+ #endif
+-    RequestInfo *pRI = android::addRequestToList(serial, mSlotId,
+-            RIL_REQUEST_SET_INITIAL_ATTACH_APN);
+-    if (pRI == NULL) {
+-        return Void();
+-    }
+ 
++    // HACK: Bypass SET_INITIAL_ATTACH_APN for Samsung RIL.
++    // The proprietary RILD binary crashes with "IsAllRatAndCTC: mccmnc =" when receiving
++    // this command on Android 12 due to the strict CellIdentity parsing dropping the PLMN.
++    // Returning success here prevents the crash and allows standard SETUP_DATA_CALL to work.
++    RadioResponseInfo responseInfo = {};
++    responseInfo.serial = serial;
++    responseInfo.type = RadioResponseType::SOLICITED;
++    responseInfo.error = RadioError::NONE;
++    mRadioResponse->setInitialAttachApnResponse(responseInfo);
++    return Void();
++
++#if 0
+     if (s_vendorFunctions->version <= 14) {
+         RIL_InitialAttachApn iaa = {};
+ 
+@@ -2018,6 +2025,7 @@ Return<void> RadioImpl::setInitialAttachApn(int32_t serial, const DataProfileInf
+     }
+ 
+     return Void();
++#endif
+ }
+ 
+ Return<void> RadioImpl::getImsRegistrationState(int32_t serial) {
+-- 
+2.43.0
+
