@@ -1,3 +1,6 @@
+# --- LineageOS/android_frameworks_av ---
+"frameworks/av" "🎥" "Camera: Restore camera HALv1 support" "https://github.com/samsungexynos3475/android_frameworks_av/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
+
 # --- LineageOS/android_frameworks_native ---
 "frameworks/native" "🎨" "renderengine: remove EGL requirement for legacy GPUs" "0001-renderengine-implement-ultimate-EGLConfig-fallback-for-legacy-Mali-GPUs.patch"
 
