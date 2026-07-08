@@ -181,8 +181,12 @@ if test -f "build/envsetup.sh"; then
             filename="${local_array[i+2]}"
 
             # Construct project folder name (replacing / with _) and patch URL
-            folder_name=$(echo "$repo_dir" | tr '/' '_')
-            patch_url="$REPO_URL/$folder_name/$filename"
+            if [[ "$filename" =~ ^https?:// ]]; then
+                patch_url="$filename"
+            else
+                folder_name=$(echo "$repo_dir" | tr '/' '_')
+                patch_url="$REPO_URL/$folder_name/$filename"
+            fi
 
             apply_patch "$repo_dir" "$emoji" "$desc" "$patch_url"
         done
