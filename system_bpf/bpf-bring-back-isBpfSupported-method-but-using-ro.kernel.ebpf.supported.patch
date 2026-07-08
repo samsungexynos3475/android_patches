@@ -1,0 +1,46 @@
+From 4227782eff5fa28d50f335f3ca34664dc3b22a68 Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Thu, 25 Nov 2021 21:42:23 +0100
+Subject: [PATCH] bpf: bring back isBpfSupported-method, but using
+ ro.kernel.ebpf.supported
+
+---
+ bpfloader/BpfLoader.cpp               | 2 +-
+ libbpf_android/include/bpf/BpfUtils.h | 4 ++++
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/bpfloader/BpfLoader.cpp b/bpfloader/BpfLoader.cpp
+index 71c9924c..fe1d264b 100644
+--- a/bpfloader/BpfLoader.cpp
++++ b/bpfloader/BpfLoader.cpp
+@@ -112,7 +112,7 @@ void createSysFsBpfSubDir(const char* const prefix) {
+ }
+ 
+ int main() {
+-    bool ebpf_supported = android::base::GetBoolProperty("ro.kernel.ebpf.supported", false);
++    bool ebpf_supported = android::bpf::isBpfSupported();
+ 
+     if (ebpf_supported) {
+         // Load all ELF objects, create programs and maps, and pin them
+diff --git a/libbpf_android/include/bpf/BpfUtils.h b/libbpf_android/include/bpf/BpfUtils.h
+index 8fd2a4ad..35df5cc0 100644
+--- a/libbpf_android/include/bpf/BpfUtils.h
++++ b/libbpf_android/include/bpf/BpfUtils.h
+@@ -16,6 +16,7 @@
+ 
+ #pragma once
+ 
++#include <android-base/properties.h>
+ #include <linux/if_ether.h>
+ #include <net/if.h>
+ #include <stdlib.h>
+@@ -40,6 +41,9 @@ int setrlimitForTest();
+ #define KVER(a, b, c) (((a) << 24) + ((b) << 16) + (c))
+ 
+ unsigned kernelVersion();
++inline bool isBpfSupported() {
++    return android::base::GetBoolProperty("ro.kernel.ebpf.supported", false);
++}
+ 
+ static inline bool isAtLeastKernelVersion(unsigned major, unsigned minor, unsigned sub) {
+     return kernelVersion() >= KVER(major, minor, sub);

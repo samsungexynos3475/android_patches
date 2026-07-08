@@ -1,0 +1,51 @@
+From e5ce4ca282116ecc104b1f5106f1e0e2a27d898d Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Mon, 13 Jul 2026 01:01:22 -0700
+Subject: [PATCH] JNI: reduce eBPF log spam on legacy kernels
+
+On devices with legacy kernels lacking eBPF CPU time tracking support,
+the system repeatedly fails to obtain CPU frequency counts and thread
+CPU times. Previously, these failures triggered an ALOGE (Error) on
+every polling cycle (e.g., every 60 seconds), severely spamming the
+logcat.
+
+- Downgrade logs "Cannot obtain CPU frequency count" and
+  "Cannot read thread CPU times" from ALOGE (Error) to ALOGD (Debug).
+- Wrap both log statements in a static boolean flag to ensure they
+  only execute and print once per boot, rather than continuously
+  every 60 seconds.
+
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ ...nternal_os_KernelSingleProcessCpuThreadReader.cpp | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/core/jni/com_android_internal_os_KernelSingleProcessCpuThreadReader.cpp b/core/jni/com_android_internal_os_KernelSingleProcessCpuThreadReader.cpp
+index dfae68429f6d1..653a79afb668f 100644
+--- a/core/jni/com_android_internal_os_KernelSingleProcessCpuThreadReader.cpp
++++ b/core/jni/com_android_internal_os_KernelSingleProcessCpuThreadReader.cpp
+@@ -71,7 +71,11 @@ class BpfCpuTimeInStateReader : public ICpuTimeInStateReader {
+     size_t getCpuFrequencyCount() {
+         std::optional<std::vector<std::vector<uint32_t>>> cpuFreqs = android::bpf::getCpuFreqs();
+         if (!cpuFreqs) {
+-            ALOGE("Cannot obtain CPU frequency count");
++            static bool logged = false;
++            if (!logged) {
++                ALOGD("Cannot obtain CPU frequency count");
++                logged = true;
++            }
+             return 0;
+         }
+ 
+@@ -215,7 +219,11 @@ static jboolean readProcessCpuUsage(JNIEnv *env, jclass, jint pid,
+                                                                 {DEFAULT_THREAD_AGGREGATION_KEY,
+                                                                  SELECTED_THREAD_AGGREGATION_KEY});
+     if (!data) {
+-        ALOGE("Cannot read thread CPU times for PID %d", pid);
++        static bool logged = false;
++        if (!logged) {
++            ALOGD("Cannot read thread CPU times for PID %d", pid);
++            logged = true;
++        }
+         return false;
+     }

@@ -1,0 +1,29 @@
+From 70b5da6aff556eae1ca7e82f70b3e70d4f6a4740 Mon Sep 17 00:00:00 2001
+From: Arne Coucheron <arco68@gmail.com>
+Date: Tue, 29 Oct 2019 00:26:15 +0100
+Subject: [PATCH] telephony: 2G wants proper signal strength too
+
+Change-Id: Ibe3acd8e214075199127b4c114a222b26aaf8498
+---
+ src/java/com/android/internal/telephony/RIL.java | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/java/com/android/internal/telephony/RIL.java b/src/java/com/android/internal/telephony/RIL.java
+index 8429c49db5e..88164053f30 100644
+--- a/src/java/com/android/internal/telephony/RIL.java
++++ b/src/java/com/android/internal/telephony/RIL.java
+@@ -7460,11 +7460,14 @@ public SignalStrength fixupSignalStrength10(SignalStrength signalStrength) {
+             }
+         }
+         switch (voiceRat) {
++            case ServiceState.RIL_RADIO_TECHNOLOGY_GPRS: /* fallthrough */
++            case ServiceState.RIL_RADIO_TECHNOLOGY_EDGE: /* fallthrough */
+             case ServiceState.RIL_RADIO_TECHNOLOGY_UMTS: /* fallthrough */
+             case ServiceState.RIL_RADIO_TECHNOLOGY_HSDPA: /* fallthrough */
+             case ServiceState.RIL_RADIO_TECHNOLOGY_HSUPA: /* fallthrough */
+             case ServiceState.RIL_RADIO_TECHNOLOGY_HSPA: /* fallthrough */
+             case ServiceState.RIL_RADIO_TECHNOLOGY_HSPAP: /* fallthrough */
++            case ServiceState.RIL_RADIO_TECHNOLOGY_GSM: /* fallthrough */
+                 break;
+             default:
+                 // If we are not currently on WCDMA/HSPA, then we don't need to do a fixup.

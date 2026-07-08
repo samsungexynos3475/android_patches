@@ -1,0 +1,25 @@
+From 9dc910e54b5bf6d3dda7ca8fb99701740f0ef7b7 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Fri, 14 Aug 2026 22:20:18 -0700
+Subject: [PATCH] javac: bump shard_size to 100000
+
+Fix build error after add camera HALv1 back.
+
+Change-Id: I4ec869a83bf52ff63e12f8d45c5c1dd9c5257bd0
+---
+ Android.bp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.bp b/Android.bp
+index 0190e7d6c349d..792e04ee580d4 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -309,7 +309,7 @@ java_defaults {
+         "--multi-dex",
+     ],
+     jarjar_rules: ":framework-jarjar-rules",
+-    javac_shard_size: 150,
++    javac_shard_size: 100000,
+     plugins: [
+         "view-inspector-annotation-processor",
+         "staledataclass-annotation-processor",
