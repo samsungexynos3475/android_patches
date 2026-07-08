@@ -1,14 +1,23 @@
 # --- LineageOS/android_frameworks_av ---
 "frameworks/av" "🎥" "Camera: Restore camera HALv1 support" "https://github.com/samsungexynos3475/android_frameworks_av/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
 
+# --- LineageOS/android_frameworks_base ---
+"frameworks/base" "⚙️" "Camera: Restore camera HALv1 support" "https://github.com/samsungexynos3475/android_frameworks_base/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
+
 # --- LineageOS/android_frameworks_native ---
 "frameworks/native" "🎨" "renderengine: remove EGL requirement for legacy GPUs" "0001-renderengine-implement-ultimate-EGLConfig-fallback-for-legacy-Mali-GPUs.patch"
+
+# --- LineageOS/android_frameworks_opt_telephony ---
+"frameworks/opt/telephony" "📞" "telephony: squashed support for old RIL features" "https://github.com/samsungexynos3475/android_frameworks_opt_telephony/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
 
 # --- LineageOS/android_hardware_broadcom_wlan ---
 "hardware/broadcom/wlan" "📶" "WifiHAl: reset global pointer and skip vendor group" "0001-WifiHAl-reset-global-pointer-to-NULL-to-fix-memory-leak.patch"
 
 # --- LineageOS/android_hardware_lineage_interfaces ---
 "hardware/lineage/interfaces" "📷" "interfaces: camera: fix undeclared F_DUPFD_CLOEXEC" "0001-interfaces-camera-fix-undeclared-F_DUPFD_CLOEXEC-identifier.patch"
+
+# --- LineageOS/android_hardware_samsung ---
+"hardware/samsung" "📱" "libril: legacy wrappers and setInitialAttachApn spoofing" "https://github.com/samsungexynos3475/android_hardware_samsung/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
 
 # --- LineageOS/android_packages_modules_adb ---
 "packages/modules/adb" "📲" "adb: bring back legacy FunctionFS support" "0001-adb-Bring-back-support-for-legacy-FunctionFS.patch"
@@ -18,6 +27,9 @@
 
 # --- LineageOS/android_system_core ---
 "system/core" "📷" "Camera: Add feature extensions" "0001-Camera-Add-feature-extensions.patch"
+
+# --- LineageOS/android_system_netd ---
+"system/netd" "🌐" "netd: bypass eBPF and handle missing quota2 module" "https://github.com/samsungexynos3475/android_system_netd/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
 
 # --- LineageOS/android_vendor_lineage ---
 "vendor/lineage" "⚙️" "generated_kernel_includes: auto-create output directory" "generated_kernel_includes-auto-create-output-directory.patch"
