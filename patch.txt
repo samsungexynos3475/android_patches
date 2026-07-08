@@ -20,7 +20,7 @@
 "hardware/samsung" "📱" "libril: legacy wrappers and setInitialAttachApn spoofing" "https://github.com/samsungexynos3475/android_hardware_samsung/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
 
 # --- LineageOS/android_packages_modules_adb ---
-"packages/modules/adb" "📲" "adb: bring back legacy FunctionFS support" "0001-adb-Bring-back-support-for-legacy-FunctionFS.patch"
+"packages/modules/adb" "📲" "adb: bring back legacy FunctionFS support" "https://github.com/LineageOS-UL/android_packages_modules_adb/commit/614f92cfc4355173ddc9d401a3d7722bc405a113.patch"
 
 # --- LineageOS/android_system_bpf ---
 "system/bpf" "⚙️" "bpfloader: bypass fatal reboot on legacy kernels" "0001-bpfloader-bypass-fatal-reboot-on-legacy-kernels-with.patch"

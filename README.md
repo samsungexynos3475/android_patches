@@ -41,7 +41,7 @@ This branch contains custom hardware patches for LineageOS 19.1 on Exynos 3475 d
 
 ### 8. ADB Legacy FunctionFS Support Backport
 * **Target Path**: `packages/modules/adb`
-* **Filename**: `packages_modules_adb/0001-adb-Bring-back-support-for-legacy-FunctionFS.patch`
+* **Filename**: `https://github.com/LineageOS-UL/android_packages_modules_adb/commit/614f92cfc4355173ddc9d401a3d7722bc405a113.patch`
 * **Details**: Restores support for legacy (non-blocking, synchronous) FunctionFS calls as a fallback in `adbd` when AIO on FFS is not supported (common on kernels < 3.18).
 
 ### 9. BPF Loader Fatal Initialization Bypass
