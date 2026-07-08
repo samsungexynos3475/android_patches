@@ -1,0 +1,23 @@
+From cfd3073e460260fde12bddbb1aefb6faae2c68c1 Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Tue, 14 Dec 2021 08:51:42 +0100
+Subject: [PATCH] Hack: Ignore SensorPrivacyService Security Exception
+
+Temporary ignore this. Don't what causes this exception.
+---
+ services/core/java/com/android/server/SensorPrivacyService.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/SensorPrivacyService.java b/services/core/java/com/android/server/SensorPrivacyService.java
+index 742a23983eb5a..ffd9f6a4b8f92 100644
+--- a/services/core/java/com/android/server/SensorPrivacyService.java
++++ b/services/core/java/com/android/server/SensorPrivacyService.java
+@@ -896,7 +896,7 @@ private void enforcePermission(String permission, String message) {
+             if (mContext.checkCallingOrSelfPermission(permission) == PERMISSION_GRANTED) {
+                 return;
+             }
+-            throw new SecurityException(message);
++            Log.e(TAG, "IGNORED: Exception: ", new SecurityException(message));
+         }
+ 
+         /**

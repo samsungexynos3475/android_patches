@@ -1,0 +1,43 @@
+From 429ad6ff9e5d27cdf18bc5a36a6159ede2d95d67 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 03:19:54 +0000
+Subject: [PATCH] telephony: fix NPE in updateServiceStateArfcnRsrpBoost
+
+When a device loses data registration or falls back to a network
+state where the CellIdentity type is NONE, the framework correctly
+parses the cell identity as null.
+
+However, updateServiceStateArfcnRsrpBoost() unconditionally
+calls cellIdentity.getType() without checking for null. On devices
+with older RILs (e.g., Samsung Exynos) that regularly return
+empty cell identities when disconnected, this results in a fatal
+NullPointerException in ServiceStateTracker.
+
+Because this exception crashes the state poll loop, the telephony
+state machine infinitely retries, causing the telephony-radio
+wakelock to be held indefinitely and severely draining the battery.
+
+This patch adds a simple null safety check to ensure we safely
+return early if the cell identity is null, porting forward the
+safety check that existed in Android 10's getLteEarfcn().
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Change-Id: I15e0b60d188221b62b86cacdd44005872345e39a
+---
+ .../com/android/internal/telephony/ServiceStateTracker.java     | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/java/com/android/internal/telephony/ServiceStateTracker.java b/src/java/com/android/internal/telephony/ServiceStateTracker.java
+index e2c6aa5cab5..9503f25ee32 100755
+--- a/src/java/com/android/internal/telephony/ServiceStateTracker.java
++++ b/src/java/com/android/internal/telephony/ServiceStateTracker.java
+@@ -5305,6 +5305,8 @@ private void updateServiceStateArfcnRsrpBoost(ServiceState serviceState,
+         int rsrpBoost = 0;
+         int arfcn;
+ 
++        if (cellIdentity == null) return;
++
+         synchronized (mRsrpBoostLock) {
+             switch (cellIdentity.getType()) {
+                 case CellInfo.TYPE_LTE:

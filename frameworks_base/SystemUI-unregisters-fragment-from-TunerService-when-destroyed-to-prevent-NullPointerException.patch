@@ -1,0 +1,23 @@
+From 9e82e6707d1d221dc4b6adac083728b1b2afbd0c Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Thu, 9 Jul 2026 18:12:50 -0700
+Subject: [PATCH] SystemUI: unregisters fragment from TunerService when
+ destroyed to prevent NullPointerException
+
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ .../statusbar/phone/fragment/CollapsedStatusBarFragment.java     | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment.java
+index 713f72a2427e2..98095c867d221 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment.java
+@@ -281,6 +281,7 @@ public void onDestroyView() {
+         if (mNetworkController.hasEmergencyCryptKeeperText()) {
+             mNetworkController.removeCallback(mSignalCallback);
+         }
++        Dependency.get(TunerService.class).removeTunable(this);
+     }
+ 
+     @Override
