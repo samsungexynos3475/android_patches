@@ -1,14 +1,10 @@
 # --- LineageOS/android_device_lineage_sepolicy ---
 "device/lineage/sepolicy" "🔋" "Battery Extender sepolicy" "../batteryextender-eleven/device_lineage_sepolicy/0001-sepolicy-add-hal_lineage_batterylifeextender.patch"
 
-# --- LineageOS/android_frameworks_av ---
-"frameworks/av" "🎥" "cameraserver: relax VideoNativeHandleMetadata size validation" "0001-cameraserver-relax-VideoNativeHandleMetadata-size-validation-for-legacy-HALs.patch"
-
 # --- LineageOS/android_frameworks_base ---
 "frameworks/base" \
   "⚙️" "Brightness float sync" "0001-core-Sync-float-brightness-from-int-setting-on-first-boot.patch" \
   "⚙️" "DEVICE_INITIAL_SDK_INT" "0002-core-Add-DEVICE_INITIAL_SDK_INT-to-Build.VERSION.patch"
-
 
 # --- LineageOS/android_hardware_broadcom_libbt ---
 "hardware/broadcom/libbt" "🔵" "libbt" "0001-libbt-Ensure-complete-I2S-PCM-initialization-sequence.patch"
@@ -16,20 +12,14 @@
 # --- LineageOS/android_hardware_broadcom_wlan ---
 "hardware/broadcom/wlan" "📶" "Wifi HAL" "0001-WifiHAl-Fix-fatal-use-after-free-causing-infinite-POLLNVAL-loop.patch"
 
-# --- LineageOS/android_hardware_interfaces ---
-"hardware/interfaces" "📷" "Camera" "0001-camera-relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch"
-
 # --- LineageOS/android_hardware_lineage_interfaces ---
-"hardware/lineage/interfaces" \
-  "📷" "Camera" "0001-interfaces-camera-relax-metadata-buffer-size-check-in-sDataCbTimestamp.patch" \
-  "🔋" "Battery Extender HAL" "../batteryextender-eleven/hardware_lineage_interfaces/0001-lineage-interfaces-add-batterylifeextender-HAL.patch"
+"hardware/lineage/interfaces" "🔋" "Battery Extender HAL" "../batteryextender-eleven/hardware_lineage_interfaces/0001-lineage-interfaces-add-batterylifeextender-HAL.patch"
 
 # --- LineageOS/android_hardware_samsung ---
 "hardware/samsung" \
   "💡" "Light HAL" "0001-hidl-light-cache-max_brightness-during-initialization.patch" \
-  "🎵" "BT SCO routing" "0002-samsung-audio-Restore-BT-SCO-VoIP-and-Cellular-routing.patch" \
   "🔋" "Battery Extender impl" "../batteryextender-eleven/hardware_samsung/0001-hidl-add-batterylifeextender-implementation.patch" \
-  "🎵" "Audio auto-fade-in" "0003-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch"
+  "🎵" "Audio auto-fade-in" "0002-samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch"
 
 # --- LineageOS/android_lineage-sdk ---
 "lineage-sdk" "🎨" "Pure black dark theme" "0001-SettingsProvider-Enable-pure-black-dark-theme-by-default.patch"
@@ -37,12 +27,5 @@
 # --- LineageOS/android_packages_apps_Settings ---
 "packages/apps/Settings" "🔋" "Protect battery toggle" "../batteryextender-eleven/packages_apps_Settings/0001-Settings-add-Protect-battery-toggle.patch"
 
-# --- LineageOS/android_packages_apps_SetupWizard ---
-"packages/apps/SetupWizard" "🧙" "Uncheck metrics by default" "0001-SetupWizard-Uncheck-Help-Improve-LineageOS-by-default.patch"
-
-# --- LineageOS/android_packages_apps_Updater ---
-"packages/apps/Updater" "🔄" "Updater custom URL" "0001-Updater-change-update-url.patch"
-
 # --- LineageOS/android_system_bt ---
 "system/bt" "🔵" "system_bt" "0001-btm-fix-SCO-I2S-routing-for-Android-10.patch"
-
