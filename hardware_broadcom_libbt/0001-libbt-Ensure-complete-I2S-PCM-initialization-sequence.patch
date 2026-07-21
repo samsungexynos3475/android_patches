@@ -1,17 +1,33 @@
-From ed3efe733d6211ed854584042a0b14bda1897021 Mon Sep 17 00:00:00 2001
+From cba02f226ee04575f4c92d108d5ccbc189668ea1 Mon Sep 17 00:00:00 2001
 From: lavenly <135024283+lavenly@users.noreply.github.com>
-Date: Thu, 18 Jun 2026 20:09:13 -0700
+Date: Tue, 21 Jul 2026 20:03:48 +0700
 Subject: [PATCH] libbt: Ensure complete I2S/PCM initialization sequence
 
-When in I2S mode, we still must send the PCM parameter (0xFC1C) and PCM format (0xFC1E) commands. Send the complete VSC sequence.
+When in I2S mode, we still must send the PCM parameter (0xFC1C) and
+PCM format (0xFC1E) commands. Send the complete VSC sequence.
 
 Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
 
+Change-Id: I85aec939115b3771334a079e61dbe8e2e91461e3
 Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
 ---
+ Android.mk     | 2 ++
  src/hardware.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ 2 files changed, 6 insertions(+), 2 deletions(-)
 
+diff --git a/Android.mk b/Android.mk
+index 170d0e3..f6a6a65 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -18,6 +18,8 @@ ifeq ($(strip $(USE_BLUETOOTH_BCM4343)),true)
+ LOCAL_CFLAGS += -DUSE_BLUETOOTH_BCM4343
+ endif
+ 
++LOCAL_CFLAGS += -DBTHW_FW_EXTENDED_CONFIGURATION=TRUE
++
+ LOCAL_CFLAGS += \
+         -Wall \
+         -Werror \
 diff --git a/src/hardware.c b/src/hardware.c
 index f8ec118..e5ebed2 100644
 --- a/src/hardware.c
@@ -37,5 +53,5 @@ index f8ec118..e5ebed2 100644
              uint8_t ret = FALSE;
  
 -- 
-2.43.0
+2.53.0
 
