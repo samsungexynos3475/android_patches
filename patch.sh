@@ -79,12 +79,24 @@ apply_patch() {
                     ;;
                 s|S )
                     echo "⏭️ Skipping patch..."
-                    git -C "$repo_dir" am --abort
+                    git -C "$repo_dir" am --abort >/dev/null 2>&1 || true
+                    git -C "$repo_dir" reset --hard HEAD >/dev/null 2>&1
+                    if git -C "$repo_dir" status --porcelain | grep '??' | grep -qE '\.(rej|orig)$'; then
+                        git -C "$repo_dir" status --porcelain | awk '/^\?\? .*\.(rej|orig)$/ {print $2}' | while read -r file; do
+                            rm -f "$repo_dir/$file"
+                        done
+                    fi
                     break
                     ;;
                 a|A )
                     echo "🛑 Aborting script..."
-                    git -C "$repo_dir" am --abort
+                    git -C "$repo_dir" am --abort >/dev/null 2>&1 || true
+                    git -C "$repo_dir" reset --hard HEAD >/dev/null 2>&1
+                    if git -C "$repo_dir" status --porcelain | grep '??' | grep -qE '\.(rej|orig)$'; then
+                        git -C "$repo_dir" status --porcelain | awk '/^\?\? .*\.(rej|orig)$/ {print $2}' | while read -r file; do
+                            rm -f "$repo_dir/$file"
+                        done
+                    fi
                     rm -f "$temp_patch"
                     exit 1
                     ;;
