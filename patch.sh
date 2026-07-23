@@ -61,6 +61,12 @@ apply_patch() {
                         echo "🔄 Attempting to run 'git am --continue' for you..."
                         if git -C "$repo_dir" am --continue; then
                             echo "✅ Patch successfully resolved and applied."
+                            if git -C "$repo_dir" status --porcelain | grep '??' | grep -qE '\.(rej|orig)$'; then
+                                echo "🧹 Cleaning up leftover .rej and .orig files..."
+                                git -C "$repo_dir" status --porcelain | awk '/^\?\? .*\.(rej|orig)$/ {print $2}' | while read -r file; do
+                                    rm -f "$repo_dir/$file"
+                                done
+                            fi
                             break
                         else
                             echo "⚠️ git am --continue failed in $repo_dir."
