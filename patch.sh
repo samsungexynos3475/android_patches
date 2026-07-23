@@ -37,9 +37,11 @@ apply_patch() {
         return 0
     fi
 
-    if ! git -C "$repo_dir" am -s < "$temp_patch"; then
+    if ! git -C "$repo_dir" am -3 -s < "$temp_patch"; then
         echo "❌ Failed to patch $repo_dir ($desc)!"
-        echo "⚠️ Conflict detected. Please resolve the conflicts in $repo_dir."
+        echo "⚠️ Conflict detected. Conflicting files:"
+        git -C "$repo_dir" status -s
+        echo "   Please resolve the conflicts in $repo_dir (look for <<<<<<< markers)."
         echo "   After resolving, run 'git add <files>' and 'git am --continue' in that directory."
         
         while true; do
