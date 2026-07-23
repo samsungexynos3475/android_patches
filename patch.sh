@@ -23,11 +23,14 @@ apply_patch() {
         exit 1
     fi
 
-    # Extract subject to check if already applied (handling unfolded multi-line headers, CRLF, and stripping [PATCH] prefixes)
-    local subject
-    subject=$(awk '/^Subject: / { sub(/\r$/, ""); sub(/^Subject: /, ""); subj = $0; while (getline > 0) { sub(/\r$/, ""); if (/^[ \t]/) { sub(/^[ \t]+/, ""); subj = subj " " $0 } else { break } }; sub(/^\[[^]]*\] /, "", subj); print subj; exit }' "$temp_patch")
+    # Use git mailinfo to robustly parse the patch subject exactly as git am sees it
+    local temp_msg temp_diff subject
+    temp_msg=$(mktemp)
+    temp_diff=$(mktemp)
+    subject=$(git mailinfo "$temp_msg" "$temp_diff" < "$temp_patch" | grep "^Subject: " | sed 's/^Subject: //')
+    rm -f "$temp_msg" "$temp_diff"
 
-    if [ -n "$subject" ] && [ -n "$(git -C "$repo_dir" log -F --grep="$subject" -n 1 --oneline)" ]; then
+    if [ -n "$subject" ] && git -C "$repo_dir" log --format="%s" | grep -F -x -q "$subject"; then
         echo "      ✔ Already applied: $subject"
         separator
         rm -f "$temp_patch"
