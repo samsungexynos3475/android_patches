@@ -106,12 +106,32 @@ list_versions() {
 }
 
 VERSION=""
+BRANCH=""
+REPO_NAME="android_patches"
 PATCHES_FILE_ARG=""
+KEYS_ARG=""
+GITHUB_TOKEN=""
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
         -v|--version)
             VERSION="$2"
+            shift 2
+            ;;
+        -b|--branch)
+            BRANCH="$2"
+            shift 2
+            ;;
+        --repo)
+            REPO_NAME="$2"
+            shift 2
+            ;;
+        --keys)
+            KEYS_ARG="$2"
+            shift 2
+            ;;
+        --token)
+            GITHUB_TOKEN="$2"
             shift 2
             ;;
         -p|--patches)
@@ -123,11 +143,14 @@ while [ "$#" -gt 0 ]; do
             exit 0
             ;;
         -h|--help)
-            echo "Usage: patch.sh <version> [options]"
-            echo "   or: patch.sh [options]"
+            echo "Usage: patch.sh [options]"
             echo ""
             echo "Options:"
             echo "  -v, --version <version>  LineageOS version (e.g., 17.1)"
+            echo "  -b, --branch <branch>    Override branch name directly (e.g., patch-17.1)"
+            echo "  --repo <name>            Target repository (default: android_patches)"
+            echo "  --keys <dir_or_url>      Private repository URL or local dir for release keys"
+            echo "  --token <token>          GitHub PAT token for private keys repo (HTTPS only)"
             echo "  -p, --patches <file>     Custom patch list filename (default: patch.txt)"
             echo "  -l, --list               List available versions"
             echo "  -h, --help               Show this help message"
@@ -145,7 +168,7 @@ while [ "$#" -gt 0 ]; do
                 VERSION="$1"
             else
                 separator
-                echo "❌ Error: Multiple versions specified ($VERSION and $1)"
+                echo "❌ Error: Unexpected argument $1"
                 separator
                 exit 1
             fi
@@ -154,16 +177,20 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ -z "$VERSION" ]; then
-    separator
-    echo "❌ Error: LineageOS version not specified."
-    echo "Usage: patch.sh <version> (e.g., 17.1) or patch.sh -v <version> -p <file>"
-    list_versions
-    exit 1
+if [ -z "$BRANCH" ]; then
+    if [ -n "$VERSION" ]; then
+        BRANCH="lineage-$VERSION"
+    else
+        separator
+        echo "❌ Error: Branch or LineageOS version not specified."
+        echo "Usage: patch.sh -v <version> OR patch.sh -b <branch>"
+        list_versions
+        exit 1
+    fi
 fi
 
 if test -f "build/envsetup.sh"; then
-    REPO_URL="https://raw.githubusercontent.com/samsungexynos3475/android_patches/refs/heads/lineage-$VERSION"
+    REPO_URL="https://raw.githubusercontent.com/samsungexynos3475/$REPO_NAME/refs/heads/$BRANCH"
 
     separator
     echo "✅ LineageOS build system found. Starting to patch now!"
@@ -225,6 +252,42 @@ if test -f "build/envsetup.sh"; then
     done < "$patches_file"
 
     rm -f "$patches_file"
+
+    if [ -n "$KEYS_ARG" ]; then
+        separator
+        echo "   📂 vendor/lineage-priv"
+        echo "      🔑 Processing release signing keys..."
+
+        mkdir -p vendor/lineage-priv/keys
+        echo "PRODUCT_DEFAULT_DEV_CERTIFICATE := vendor/lineage-priv/keys/releasekey" > vendor/lineage-priv/keys/keys.mk
+
+        if [[ "$KEYS_ARG" =~ ^https?:// ]] || [[ "$KEYS_ARG" =~ ^git@ ]]; then
+            echo "      🌐 Cloning keys from private repository..."
+            
+            local_keys_url="$KEYS_ARG"
+            if [ -n "$GITHUB_TOKEN" ] && [[ "$local_keys_url" =~ ^https:// ]]; then
+                # Inject token into the HTTPS URL
+                local_keys_url=$(echo "$local_keys_url" | sed -E "s|^(https://)(.*)|\1$GITHUB_TOKEN@\2|")
+            fi
+
+            temp_keys=$(mktemp -d)
+            if git clone --depth 1 "$local_keys_url" "$temp_keys"; then
+                cp -v "$temp_keys/"*.pk8 "$temp_keys/"*.x509.pem vendor/lineage-priv/keys/
+            else
+                echo "❌ Failed to clone keys repository!"
+                rm -rf "$temp_keys"
+                exit 1
+            fi
+            rm -rf "$temp_keys"
+        elif [ -d "$KEYS_ARG" ]; then
+            echo "      📂 Copying local keys from $KEYS_ARG..."
+            cp -v "$KEYS_ARG/"*.pk8 "$KEYS_ARG/"*.x509.pem vendor/lineage-priv/keys/
+        else
+            echo "❌ Keys argument provided ($KEYS_ARG) is not a valid directory or Git URL!"
+            exit 1
+        fi
+    fi
+
 else
     separator
     echo "❌ LineageOS build system not found. Make sure you're in the build folder! Aborting..."
