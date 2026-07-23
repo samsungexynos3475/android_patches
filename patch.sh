@@ -70,7 +70,12 @@ apply_patch() {
                             break
                         else
                             echo "⚠️ git am --continue failed in $repo_dir."
-                            echo "   Did you forget to 'git add' your resolved files?"
+                            if git -C "$repo_dir" diff --quiet && git -C "$repo_dir" diff --cached --quiet; then
+                                echo "   It looks like this patch introduces no new changes (already applied?)."
+                                echo "   👉 Please type 's' to skip this empty patch."
+                            else
+                                echo "   Did you forget to 'git add' your resolved files?"
+                            fi
                         fi
                     else
                         echo "✅ Patch successfully resolved and applied."
