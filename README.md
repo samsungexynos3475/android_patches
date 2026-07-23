@@ -34,10 +34,10 @@ This branch contains custom hardware patches for LineageOS 19.1 on Exynos 3475 d
 * **Filename**: `hardware_lineage_interfaces/0001-interfaces-camera-fix-undeclared-F_DUPFD_CLOEXEC-identifier.patch`
 * **Details**: Explicitly includes `<fcntl.h>` in `CameraDevice.cpp` for the 1.0-legacy camera HIDL service, resolving compilation failures on Android 12 due to cleanup of implicit header imports.
 
-### 7. Samsung libril memory/mutex wrappers and setInitialAttachApn spoofing
-* **Target Path**: `hardware/samsung`
-* **Filename**: `https://github.com/samsungexynos3475/android_hardware_samsung/compare/LineageOS:lineage-19.1...lineage-19.1.patch`
-* **Details**: Implements custom recursive mutexes (`zthread_mutex_*`) and calloc-based zalloc helpers to prevent Bionic side-table copy-by-value crashes in binary patched RIL blobs. Also intercepts `setInitialAttachApn` and spoofs success to prevent the proprietary daemon from crashing with empty APN configurations on Android 12.
+### 7. TcpSocketTracker Opt-out on Legacy Kernels
+* **Target Path**: `packages/modules/NetworkStack`
+* **Filename**: `https://github.com/DerpFest-AOSP/packages_modules_NetworkStack/commit/22fd53a977eeaf4e36be7bf6358ecf2c2737fa5e.patch`
+* **Details**: Opt-out for TCP info parsing on legacy kernels (< 4.4) that lack the required netlink features, avoiding constant crashes in `TcpSocketTracker`.
 
 ### 8. ADB Legacy FunctionFS Support Backport
 * **Target Path**: `packages/modules/adb`

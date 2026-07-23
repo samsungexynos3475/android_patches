@@ -16,8 +16,8 @@
 # --- LineageOS/android_hardware_lineage_interfaces ---
 "hardware/lineage/interfaces" "📷" "interfaces: camera: fix undeclared F_DUPFD_CLOEXEC" "0001-interfaces-camera-fix-undeclared-F_DUPFD_CLOEXEC-identifier.patch"
 
-# --- LineageOS/android_hardware_samsung ---
-"hardware/samsung" "📱" "libril: legacy wrappers and setInitialAttachApn spoofing" "https://github.com/samsungexynos3475/android_hardware_samsung/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
+# --- LineageOS/android_packages_modules_NetworkStack ---
+"packages/modules/NetworkStack" "🌐" "TcpSocketTracker: Opt-out for TCP info parsing on legacy kernels" "https://github.com/DerpFest-AOSP/packages_modules_NetworkStack/commit/22fd53a977eeaf4e36be7bf6358ecf2c2737fa5e.patch"
 
 # --- LineageOS/android_packages_modules_adb ---
 "packages/modules/adb" "📲" "adb: bring back legacy FunctionFS support" "https://github.com/LineageOS-UL/android_packages_modules_adb/commit/614f92cfc4355173ddc9d401a3d7722bc405a113.patch"
