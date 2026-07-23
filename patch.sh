@@ -35,9 +35,38 @@ apply_patch() {
     fi
 
     if ! git -C "$repo_dir" am -s < "$temp_patch"; then
-        echo "❌ Failed to patch $repo_dir ($desc)! Aborting..."
-        rm -f "$temp_patch"
-        exit 1
+        echo "❌ Failed to patch $repo_dir ($desc)!"
+        echo "⚠️ Conflict detected. Please resolve the conflicts in $repo_dir."
+        echo "   After resolving, run 'git add <files>' and 'git am --continue' in that directory."
+        
+        while true; do
+            read -p "Type 'c' to continue after resolving, 's' to skip this patch, or 'a' to abort: " choice < /dev/tty
+            case "$choice" in
+                c|C )
+                    if [ -d "$repo_dir/.git/rebase-apply" ]; then
+                        echo "⚠️ git am is still in progress in $repo_dir."
+                        echo "   Did you forget to run 'git am --continue'?"
+                    else
+                        echo "✅ Patch successfully resolved and applied."
+                        break
+                    fi
+                    ;;
+                s|S )
+                    echo "⏭️ Skipping patch..."
+                    git -C "$repo_dir" am --abort
+                    break
+                    ;;
+                a|A )
+                    echo "🛑 Aborting script..."
+                    git -C "$repo_dir" am --abort
+                    rm -f "$temp_patch"
+                    exit 1
+                    ;;
+                * )
+                    echo "Invalid choice. Please type 'c', 's', or 'a'."
+                    ;;
+            esac
+        done
     fi
 
     rm -f "$temp_patch"
