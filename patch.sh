@@ -58,8 +58,14 @@ apply_patch() {
             case "$choice" in
                 c|C )
                     if [ -d "$repo_dir/.git/rebase-apply" ]; then
-                        echo "⚠️ git am is still in progress in $repo_dir."
-                        echo "   Did you forget to run 'git am --continue'?"
+                        echo "🔄 Attempting to run 'git am --continue' for you..."
+                        if git -C "$repo_dir" am --continue; then
+                            echo "✅ Patch successfully resolved and applied."
+                            break
+                        else
+                            echo "⚠️ git am --continue failed in $repo_dir."
+                            echo "   Did you forget to 'git add' your resolved files?"
+                        fi
                     else
                         echo "✅ Patch successfully resolved and applied."
                         break
