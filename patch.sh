@@ -39,9 +39,18 @@ apply_patch() {
 
     if ! git -C "$repo_dir" am -3 -s < "$temp_patch"; then
         echo "❌ Failed to patch $repo_dir ($desc)!"
-        echo "⚠️ Conflict detected. Conflicting files:"
+        
+        # If 3-way merge fails due to missing ancestor, it leaves no conflict markers. 
+        # In this case, we fallback to git apply --reject to force apply and generate .rej files.
+        if ! git -C "$repo_dir" status -s | grep -q "^UU "; then
+            echo "⚠️ No conflict markers found (likely missing fake ancestor)."
+            echo "   Forcing patch application with --reject to generate .rej files..."
+            git -C "$repo_dir" apply --reject < "$temp_patch" || true
+        fi
+        
+        echo "⚠️ Conflict detected. Conflicting files / Rejects:"
         git -C "$repo_dir" status -s
-        echo "   Please resolve the conflicts in $repo_dir (look for <<<<<<< markers)."
+        echo "   Please resolve the conflicts in $repo_dir (look for <<<<<<< markers or .rej files)."
         echo "   After resolving, run 'git add <files>' and 'git am --continue' in that directory."
         
         while true; do
