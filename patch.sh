@@ -32,9 +32,25 @@ apply_patch() {
 
     if [ -n "$subject" ] && git -C "$repo_dir" log --format="%s" | grep -F -x -q "$subject"; then
         echo "      ✔ Already applied: $subject"
-        separator
-        rm -f "$temp_patch"
-        return 0
+        
+        while true; do
+            read -p "Type 's' to skip this patch, or 'f' to force apply it anyway: " choice < /dev/tty
+            case "$choice" in
+                s|S )
+                    echo "⏭️ Skipping patch..."
+                    separator
+                    rm -f "$temp_patch"
+                    return 0
+                    ;;
+                f|F )
+                    echo "⚠️ Forcing patch application..."
+                    break
+                    ;;
+                * )
+                    echo "Invalid choice. Please type 's' or 'f'."
+                    ;;
+            esac
+        done
     fi
 
     if ! git -C "$repo_dir" am -3 -s < "$temp_patch"; then
