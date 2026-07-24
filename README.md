@@ -59,7 +59,12 @@ This branch contains custom hardware patches for LineageOS 19.1 on Exynos 3475 d
 * **Filename**: `https://github.com/samsungexynos3475/android_system_netd/compare/LineageOS:lineage-19.1...lineage-19.1.patch`
 * **Details**: Bypasses eBPF startup requirements and inserts a legacy UID 0 routing fallback rule for kernels without eBPF. Also patches netd to bypass `quota2` iptables module errors, preventing system_server crashes and bootloops when connecting to mobile data.
 
-### 12. Generated Kernel Headers Output Directory Auto-Creation
+### 12. Keystore2 Hackup for Legacy Hardware
+* **Target Path**: `system/security`
+* **Filename**: `system_security/0001-keystore2-keystore-hackup.patch`
+* **Details**: Modifies keystore2 `km_compat_type_conversion.h` to return `OK` for `UNSUPPORTED_PURPOSE` and `UNSUPPORTED_DIGEST` error codes, bypassing strict hardware-backed keystore compatibility requirements on legacy devices.
+
+### 13. Generated Kernel Headers Output Directory Auto-Creation
 * **Target Path**: `vendor/lineage`
 * **Filename**: `vendor_lineage/generated_kernel_includes-auto-create-output-directory.patch`
 * **Details**: Adds a `mkdir -p` command to `generated_kernel_includes` in the Soong build configuration (`Android.bp`) to create the build folder before running `headers_install`, resolving build failures when building with legacy 3.10 kernels.
