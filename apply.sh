@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+apply_msg "🎵 Audio blast fix"
+apply "hardware/samsung" "https://raw.githubusercontent.com/samsungexynos3475/android_patches/refs/heads/lineage-17.1/hardware_samsung/samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch"
+
 apply_msg "⚙️ BPF support for legacy devices"
 apply "system/bpf" "https://github.com/LineageOS/android_system_bpf/compare/lineage-23.2...samsungexynos3475:android_system_bpf:lineage-19.1.patch"
 
