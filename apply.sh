@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+apply_msg "🎵 Audio blast fix"
+apply "hardware/samsung" "samsung-audio-Implement-auto-fade-in-to-suppress-AudioFlinger-volume-delay-blast.patch"
+
 apply_msg "⚙️ BPF support for legacy devices"
 apply "system/bpf" \
     "bpf-bring-back-isBpfSupported-method-but-using-ro.kernel.ebpf.supported.patch" \
