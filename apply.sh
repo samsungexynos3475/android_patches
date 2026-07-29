@@ -18,3 +18,9 @@ apply "packages/apps/UnifiedEmail" "packages_apps_UnifiedEmail/UnifiedEmail-Repl
 apply_msg "🔑 Keystore backports"
 apply "frameworks/base" "keystore/frameworks_base/keystore-backport-KeyStoreException.patch"
 apply "system/security" "keystore/system_security/keystore-silently-upgrade-key-blobs-during-attestation-to-bypass-KEY_REQUIRES_UPGRADE-errors.patch"
+
+apply_msg "⚙️ Low RAM mode hacks"
+apply "frameworks/base" "lowram/frameworks_base/HACK-core-services-allow-features-on-low-ram-mode.patch"
+apply "frameworks/native" "lowram/frameworks_native/handheld-allow-PiP-and-work-profile-on-low-ram-mode.patch"
+apply "packages/apps/Settings" "lowram/packages_apps_Settings/HACK-Settings-allow-features-settings-page-on-low-ram-mode.patch"
+apply "packages/apps/Trebuchet" "lowram/packages_apps_Trebuchet/HACK-Trebuchet-allow-notification-dots-on-low-ram-mode.patch"

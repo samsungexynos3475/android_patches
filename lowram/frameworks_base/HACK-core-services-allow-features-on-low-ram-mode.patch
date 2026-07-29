@@ -1,0 +1,80 @@
+From ab82bc3f206148a1f52d3a3dd928b036a0105a09 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Tue, 21 Jul 2026 17:08:20 -0700
+Subject: [PATCH] HACK: core/services: allow features on low ram mode
+
+Enable display over other apps, freeform, notifications dots, PiP, screen off animation, split screen and work profile
+
+Change-Id: Ic1ecd406bbbbfe0e2fc5abbceaa95efbc5d2ad27
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ core/java/android/app/ActivityTaskManager.java                | 2 +-
+ .../com/android/server/display/DisplayPowerController.java    | 2 +-
+ .../server/notification/NotificationManagerService.java       | 4 ++--
+ .../core/java/com/android/server/pm/UserManagerService.java   | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/core/java/android/app/ActivityTaskManager.java b/core/java/android/app/ActivityTaskManager.java
+index 4ef554dc..a0438f64 100644
+--- a/core/java/android/app/ActivityTaskManager.java
++++ b/core/java/android/app/ActivityTaskManager.java
+@@ -288,7 +288,7 @@ public class ActivityTaskManager {
+         // supported regardless of device memory characteristics.
+         boolean isWatch = context.getPackageManager().hasSystemFeature(
+                 PackageManager.FEATURE_WATCH);
+-        return (!ActivityManager.isLowRamDeviceStatic() || isWatch)
++        return (true || isWatch)
+                 && Resources.getSystem().getBoolean(
+                 com.android.internal.R.bool.config_supportsMultiWindow);
+     }
+diff --git a/services/core/java/com/android/server/display/DisplayPowerController.java b/services/core/java/com/android/server/display/DisplayPowerController.java
+index 3aed2c81..19aaa8b7 100644
+--- a/services/core/java/com/android/server/display/DisplayPowerController.java
++++ b/services/core/java/com/android/server/display/DisplayPowerController.java
+@@ -510,7 +510,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+             }
+         }
+ 
+-        mColorFadeEnabled = !ActivityManager.isLowRamDeviceStatic();
++        mColorFadeEnabled = true;
+         mColorFadeFadesConfig = resources.getBoolean(
+                 com.android.internal.R.bool.config_animateScreenLights);
+ 
+diff --git a/services/core/java/com/android/server/notification/NotificationManagerService.java b/services/core/java/com/android/server/notification/NotificationManagerService.java
+index 55eb47fa..9819482b 100755
+--- a/services/core/java/com/android/server/notification/NotificationManagerService.java
++++ b/services/core/java/com/android/server/notification/NotificationManagerService.java
+@@ -5208,7 +5208,7 @@ public class NotificationManagerService extends SystemService {
+             return false;
+         }
+ 
+-        if (mActivityManager.isLowRamDevice()) {
++        if (false) {
+             logBubbleError(r.getKey(), "low ram device");
+             return false;
+         }
+@@ -7971,7 +7971,7 @@ public class NotificationManagerService extends SystemService {
+ 
+     @VisibleForTesting
+     boolean canUseManagedServices(String pkg, Integer userId, String requiredPermission) {
+-        boolean canUseManagedServices = !mActivityManager.isLowRamDevice()
++        boolean canUseManagedServices = true
+                 || mPackageManagerClient.hasSystemFeature(PackageManager.FEATURE_WATCH);
+ 
+         for (String whitelisted : getContext().getResources().getStringArray(
+diff --git a/services/core/java/com/android/server/pm/UserManagerService.java b/services/core/java/com/android/server/pm/UserManagerService.java
+index 645ee1a2..dfe4ac11 100644
+--- a/services/core/java/com/android/server/pm/UserManagerService.java
++++ b/services/core/java/com/android/server/pm/UserManagerService.java
+@@ -1905,7 +1905,7 @@ public class UserManagerService extends IUserManager.Stub {
+     public boolean canAddMoreManagedProfiles(int userId, boolean allowedToRemoveOne) {
+         checkManageUsersPermission("check if more managed profiles can be added.");
+         if (ActivityManager.isLowRamDeviceStatic()) {
+-            return false;
++            return true;
+         }
+         if (!mContext.getPackageManager().hasSystemFeature(
+                 PackageManager.FEATURE_MANAGED_USERS)) {
+-- 
+2.53.0
+
