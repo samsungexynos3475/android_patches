@@ -1,0 +1,26 @@
+From f065b2217004eefc8833af750080966dbd5503bb Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Sun, 2 Aug 2026 17:57:19 -0700
+Subject: [PATCH] HACK: Trebuchet: allow notification dots on low ram mode
+
+Change-Id: I2007333f928159a7eb9e37befa3a7c419e2975ac
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ src/com/android/launcher3/settings/SettingsActivity.java | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/com/android/launcher3/settings/SettingsActivity.java b/src/com/android/launcher3/settings/SettingsActivity.java
+index fa064ef..6fd419a 100644
+--- a/src/com/android/launcher3/settings/SettingsActivity.java
++++ b/src/com/android/launcher3/settings/SettingsActivity.java
+@@ -217,7 +217,6 @@ public class SettingsActivity extends Activity
+             switch (preference.getKey()) {
+                 case NOTIFICATION_DOTS_PREFERENCE_KEY:
+                     if (!Utilities.ATLEAST_OREO ||
+-                            getContext().getSystemService(ActivityManager.class).isLowRamDevice() ||
+                             !getResources().getBoolean(R.bool.notification_dots_enabled)) {
+                         return false;
+                     }
+-- 
+2.53.0
+

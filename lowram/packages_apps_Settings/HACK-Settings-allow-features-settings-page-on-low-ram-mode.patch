@@ -1,0 +1,99 @@
+From dd186a72d17e6218b2e8b4a7da14e9408264b688 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Sun, 2 Aug 2026 18:36:49 -0700
+Subject: [PATCH] HACK: Settings: allow features settings page on low ram mode
+
+Enable display over other apps, notification dots and PiP settings page
+
+Change-Id: I211ac6670cbc68a8b2b1ee034e4b16d37f84b30c
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ src/com/android/settings/Utils.java                             | 2 +-
+ .../notificationaccess/NotificationAccessController.java        | 2 +-
+ .../NotificationAccessScreenPreferenceController.java           | 2 +-
+ .../pictureinpicture/PictureInPictureController.java            | 2 +-
+ .../PictureInPictureScreenPreferenceController.java             | 2 +-
+ src/com/android/settings/utils/ManagedServiceSettings.java      | 2 +-
+ 6 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/src/com/android/settings/Utils.java b/src/com/android/settings/Utils.java
+index f2ff1cd..8c7afb6 100644
+--- a/src/com/android/settings/Utils.java
++++ b/src/com/android/settings/Utils.java
+@@ -1041,7 +1041,7 @@ public final class Utils extends com.android.settingslib.Utils {
+     public static boolean isSystemAlertWindowEnabled(Context context) {
+         // SYSTEM_ALERT_WINDOW is disabled on on low ram devices starting from Q
+         ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+-        return !(am.isLowRamDevice() && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q));
++        return true;
+     }
+ 
+     /**
+diff --git a/src/com/android/settings/applications/specialaccess/notificationaccess/NotificationAccessController.java b/src/com/android/settings/applications/specialaccess/notificationaccess/NotificationAccessController.java
+index f9e8fe3..ac65091 100644
+--- a/src/com/android/settings/applications/specialaccess/notificationaccess/NotificationAccessController.java
++++ b/src/com/android/settings/applications/specialaccess/notificationaccess/NotificationAccessController.java
+@@ -29,7 +29,7 @@ public class NotificationAccessController extends BasePreferenceController {
+ 
+     @Override
+     public int getAvailabilityStatus() {
+-        return !ActivityManager.isLowRamDeviceStatic()
++        return true
+                 ? AVAILABLE_UNSEARCHABLE
+                 : UNSUPPORTED_ON_DEVICE;
+     }
+diff --git a/src/com/android/settings/applications/specialaccess/notificationaccess/NotificationAccessScreenPreferenceController.java b/src/com/android/settings/applications/specialaccess/notificationaccess/NotificationAccessScreenPreferenceController.java
+index b86489d..3086a3c 100644
+--- a/src/com/android/settings/applications/specialaccess/notificationaccess/NotificationAccessScreenPreferenceController.java
++++ b/src/com/android/settings/applications/specialaccess/notificationaccess/NotificationAccessScreenPreferenceController.java
+@@ -29,7 +29,7 @@ public class NotificationAccessScreenPreferenceController extends BasePreference
+ 
+     @Override
+     public int getAvailabilityStatus() {
+-        return !ActivityManager.isLowRamDeviceStatic()
++        return true
+                 ? AVAILABLE
+                 : UNSUPPORTED_ON_DEVICE;
+     }
+diff --git a/src/com/android/settings/applications/specialaccess/pictureinpicture/PictureInPictureController.java b/src/com/android/settings/applications/specialaccess/pictureinpicture/PictureInPictureController.java
+index 714b662..2704c35 100644
+--- a/src/com/android/settings/applications/specialaccess/pictureinpicture/PictureInPictureController.java
++++ b/src/com/android/settings/applications/specialaccess/pictureinpicture/PictureInPictureController.java
+@@ -29,7 +29,7 @@ public class PictureInPictureController extends BasePreferenceController {
+ 
+     @Override
+     public int getAvailabilityStatus() {
+-        return !ActivityManager.isLowRamDeviceStatic()
++        return true
+                 ? AVAILABLE_UNSEARCHABLE
+                 : UNSUPPORTED_ON_DEVICE;
+     }
+diff --git a/src/com/android/settings/applications/specialaccess/pictureinpicture/PictureInPictureScreenPreferenceController.java b/src/com/android/settings/applications/specialaccess/pictureinpicture/PictureInPictureScreenPreferenceController.java
+index def6008..05fac94 100644
+--- a/src/com/android/settings/applications/specialaccess/pictureinpicture/PictureInPictureScreenPreferenceController.java
++++ b/src/com/android/settings/applications/specialaccess/pictureinpicture/PictureInPictureScreenPreferenceController.java
+@@ -30,7 +30,7 @@ public class PictureInPictureScreenPreferenceController extends BasePreferenceCo
+ 
+     @Override
+     public int getAvailabilityStatus() {
+-        return !ActivityManager.isLowRamDeviceStatic()
++        return true
+                 ? AVAILABLE
+                 : UNSUPPORTED_ON_DEVICE;
+     }
+diff --git a/src/com/android/settings/utils/ManagedServiceSettings.java b/src/com/android/settings/utils/ManagedServiceSettings.java
+index 3ec63c3..8f6452a 100644
+--- a/src/com/android/settings/utils/ManagedServiceSettings.java
++++ b/src/com/android/settings/utils/ManagedServiceSettings.java
+@@ -91,7 +91,7 @@ public abstract class ManagedServiceSettings extends EmptyTextSettings {
+     @Override
+     public void onResume() {
+         super.onResume();
+-        if (!ActivityManager.isLowRamDeviceStatic()) {
++        if (true) {
+             mServiceListing.reload();
+             mServiceListing.setListening(true);
+         } else {
+-- 
+2.53.0
+
