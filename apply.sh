@@ -25,6 +25,11 @@ apply_msg "🔐 Keystore patch"
 apply "hardware/libhardware" "hardware_libhardware/include-keystore-hackup.patch"
 apply "system/security" "system_security/keystore2-keystore-hackup.patch"
 
+apply_msg "⚙️ Low RAM mode hack"
+apply "frameworks/native" "lowram/frameworks_native/handheld-allow-PiP-and-work-profile-on-low-ram-mode.patch"
+apply "frameworks/base" "lowram/frameworks_base/HACK-core-services-allow-features-on-low-ram-mode.patch"
+apply "packages/apps/Settings" "lowram/packages_apps_Settings/HACK-Settings-allow-features-settings-page-on-low-ram-mode.patch"
+
 apply_msg "🌐 NETD support for legacy devices"
 apply "system/netd" "https://github.com/samsungexynos3475/android_system_netd/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
 
