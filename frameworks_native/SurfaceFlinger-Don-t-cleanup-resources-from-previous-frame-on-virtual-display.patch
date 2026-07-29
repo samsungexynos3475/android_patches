@@ -1,0 +1,23 @@
+From 28ba3a132a1a699b602db2ccc89a391f4731334b Mon Sep 17 00:00:00 2001
+From: nyyu <mail@nyyu.dev>
+Date: Mon, 29 Aug 2022 21:55:50 +0200
+Subject: [PATCH] SurfaceFlinger: Don't cleanup resources from previous
+ frame on virtual display
+
+Causes bad lag on some legacy devices while WFD
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 5a92e147bc9..210eb48a296 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -2904,7 +2904,6 @@ void SurfaceFlinger::processDisplayChanged(const wp<IBinder>& displayToken,
+ 
+     // Recreate the DisplayDevice if the surface or sequence ID changed.
+     if (currentBinder != drawingBinder || currentState.sequenceId != drawingState.sequenceId) {
+-        getRenderEngine().cleanFramebufferCache();
+ 
+         if (const auto display = getDisplayDeviceLocked(displayToken)) {
+             display->disconnect();
