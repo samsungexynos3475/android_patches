@@ -31,6 +31,9 @@ apply "hardware/broadcom/wlan" "hardware_broadcom_wlan/WifiHAl-reset-global-poin
 apply_msg "🎥 Restore camera HALv1 support"
 apply "frameworks/av" "https://github.com/samsungexynos3475/android_frameworks_av/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
 
+apply_msg "📱 SurfaceFlinger patch for legacy devices"
+apply "frameworks/native" "https://github.com/LineageOS/android_frameworks_native/commit/83ce920d7edac575d60bd7e4d7a8b8be7dbe9b55.patch"
+
 apply_msg "📞 Telephony support for old RIL features"
 apply "frameworks/opt/telephony" "https://github.com/samsungexynos3475/android_frameworks_opt_telephony/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
 
