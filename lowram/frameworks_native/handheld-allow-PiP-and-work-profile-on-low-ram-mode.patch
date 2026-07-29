@@ -1,0 +1,36 @@
+From 4cf15d1a27532067c34d24eff42dcef957016ad7 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Mon, 3 Aug 2026 02:03:44 -0700
+Subject: [PATCH] handheld: allow PiP and work profile on low ram mode
+
+Change-Id: Ic774727656f03c41490903dafba627a932ff114a
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ data/etc/handheld_core_hardware.xml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/data/etc/handheld_core_hardware.xml b/data/etc/handheld_core_hardware.xml
+index dc6963f..75c1ad6 100644
+--- a/data/etc/handheld_core_hardware.xml
++++ b/data/etc/handheld_core_hardware.xml
+@@ -45,7 +45,7 @@
+     <feature name="android.software.backup" />
+     <feature name="android.software.home_screen" />
+     <feature name="android.software.input_methods" />
+-    <feature name="android.software.picture_in_picture" notLowRam="true" />
++    <feature name="android.software.picture_in_picture" />
+     <feature name="android.software.activities_on_secondary_displays" notLowRam="true" />
+     <feature name="android.software.print" />
+     <feature name="android.software.companion_device_setup" />
+@@ -57,7 +57,7 @@
+     <feature name="android.software.device_admin" />
+ 
+     <!-- Feature to specify if the device support managed users. -->
+-    <feature name="android.software.managed_users" notLowRam="true"/>
++    <feature name="android.software.managed_users" />
+ 
+     <!-- Feature to specify if the device supports controls. -->
+     <feature name="android.software.controls" />
+-- 
+2.53.0
+
