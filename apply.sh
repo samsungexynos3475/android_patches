@@ -18,6 +18,11 @@ apply "frameworks/base" "frameworks_base/core-Sync-float-brightness-from-int-set
 apply_msg "🔑 Keystore backport"
 apply "frameworks/base" "keystore/frameworks_base/core-Add-DEVICE_INITIAL_SDK_INT-to-Build.VERSION.patch"
 
+apply_msg "⚙️ Low RAM mode hack"
+apply "frameworks/native" "lowram/frameworks_native/handheld-allow-PiP-and-work-profile-on-low-ram-mode.patch"
+apply "frameworks/base" "lowram/frameworks_base/HACK-core-services-allow-features-on-low-ram-mode.patch"
+apply "packages/apps/Settings" "lowram/packages_apps_Settings/HACK-Settings-allow-features-settings-page-on-low-ram-mode.patch"
+
 apply_msg "💥 SystemUI crash when swipe lockscreen"
 apply "frameworks/base" "frameworks_base/SystemUI-fix-NullPointerException-in-CollapsedStatusBarFragment-on-lockscreen-swipe.patch"
 

@@ -1,0 +1,100 @@
+From c177cd0c73d906bc82d5b01b549336f3a8053364 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Mon, 3 Aug 2026 01:08:56 -0700
+Subject: [PATCH] HACK: Settings: allow features settings page on low ram mode
+
+Enable display over other apps, notification dots and PiP settings page
+
+Change-Id: I2007333f928159a7eb9e37befa3a7c419e2975ac
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ src/com/android/settings/Utils.java                            | 2 +-
+ .../pictureinpicture/PictureInPictureController.java           | 3 +--
+ .../notification/BubbleNotificationPreferenceController.java   | 2 +-
+ .../BubbleSummaryNotificationPreferenceController.java         | 2 +-
+ .../settings/notification/app/BubblePreferenceController.java  | 2 +-
+ .../notification/app/BubbleSummaryPreferenceController.java    | 2 +-
+ 6 files changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/src/com/android/settings/Utils.java b/src/com/android/settings/Utils.java
+index 95d6546..75374da 100644
+--- a/src/com/android/settings/Utils.java
++++ b/src/com/android/settings/Utils.java
+@@ -1062,7 +1062,7 @@ public final class Utils extends com.android.settingslib.Utils {
+     public static boolean isSystemAlertWindowEnabled(Context context) {
+         // SYSTEM_ALERT_WINDOW is disabled on on low ram devices starting from Q
+         ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+-        return !(am.isLowRamDevice() && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q));
++        return true;
+     }
+ 
+     /**
+diff --git a/src/com/android/settings/applications/specialaccess/pictureinpicture/PictureInPictureController.java b/src/com/android/settings/applications/specialaccess/pictureinpicture/PictureInPictureController.java
+index fa8afc9..605b9d8 100644
+--- a/src/com/android/settings/applications/specialaccess/pictureinpicture/PictureInPictureController.java
++++ b/src/com/android/settings/applications/specialaccess/pictureinpicture/PictureInPictureController.java
+@@ -30,8 +30,7 @@ public class PictureInPictureController extends BasePreferenceController {
+ 
+     @Override
+     public int getAvailabilityStatus() {
+-        return !ActivityManager.isLowRamDeviceStatic()
+-                && mContext.getPackageManager().hasSystemFeature(
++        return mContext.getPackageManager().hasSystemFeature(
+                 PackageManager.FEATURE_PICTURE_IN_PICTURE) ? AVAILABLE : UNSUPPORTED_ON_DEVICE;
+     }
+ }
+diff --git a/src/com/android/settings/notification/BubbleNotificationPreferenceController.java b/src/com/android/settings/notification/BubbleNotificationPreferenceController.java
+index 1c7b4df..2d0e816 100644
+--- a/src/com/android/settings/notification/BubbleNotificationPreferenceController.java
++++ b/src/com/android/settings/notification/BubbleNotificationPreferenceController.java
+@@ -83,7 +83,7 @@ public class BubbleNotificationPreferenceController extends TogglePreferenceCont
+     @Override
+     public int getAvailabilityStatus() {
+         ActivityManager am = mContext.getSystemService(ActivityManager.class);
+-        return am.isLowRamDevice() ? UNSUPPORTED_ON_DEVICE : AVAILABLE;
++        return AVAILABLE;
+     }
+ 
+     @Override
+diff --git a/src/com/android/settings/notification/BubbleSummaryNotificationPreferenceController.java b/src/com/android/settings/notification/BubbleSummaryNotificationPreferenceController.java
+index a99155f..1c760ac 100644
+--- a/src/com/android/settings/notification/BubbleSummaryNotificationPreferenceController.java
++++ b/src/com/android/settings/notification/BubbleSummaryNotificationPreferenceController.java
+@@ -50,7 +50,7 @@ public class BubbleSummaryNotificationPreferenceController extends BasePreferenc
+     @Override
+     public int getAvailabilityStatus() {
+         ActivityManager am = mContext.getSystemService(ActivityManager.class);
+-        return am.isLowRamDevice() ? UNSUPPORTED_ON_DEVICE : AVAILABLE;
++        return AVAILABLE;
+     }
+ 
+     private boolean areBubblesEnabled() {
+diff --git a/src/com/android/settings/notification/app/BubblePreferenceController.java b/src/com/android/settings/notification/app/BubblePreferenceController.java
+index 8f452f7..4d26a33 100644
+--- a/src/com/android/settings/notification/app/BubblePreferenceController.java
++++ b/src/com/android/settings/notification/app/BubblePreferenceController.java
+@@ -141,7 +141,7 @@ public class BubblePreferenceController extends NotificationPreferenceController
+ 
+     private boolean isGloballyEnabled() {
+         ActivityManager am = mContext.getSystemService(ActivityManager.class);
+-        return !am.isLowRamDevice() && Settings.Global.getInt(mContext.getContentResolver(),
++        return Settings.Global.getInt(mContext.getContentResolver(),
+                 NOTIFICATION_BUBBLES, SYSTEM_WIDE_OFF) == SYSTEM_WIDE_ON;
+     }
+ 
+diff --git a/src/com/android/settings/notification/app/BubbleSummaryPreferenceController.java b/src/com/android/settings/notification/app/BubbleSummaryPreferenceController.java
+index 236e628..7a62246 100644
+--- a/src/com/android/settings/notification/app/BubbleSummaryPreferenceController.java
++++ b/src/com/android/settings/notification/app/BubbleSummaryPreferenceController.java
+@@ -101,7 +101,7 @@ public class BubbleSummaryPreferenceController extends NotificationPreferenceCon
+ 
+     private boolean isGloballyEnabled() {
+         ActivityManager am = mContext.getSystemService(ActivityManager.class);
+-        return !am.isLowRamDevice() && Settings.Global.getInt(mContext.getContentResolver(),
++        return Settings.Global.getInt(mContext.getContentResolver(),
+                 NOTIFICATION_BUBBLES, ON) == ON;
+     }
+ }
+-- 
+2.53.0
+
