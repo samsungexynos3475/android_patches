@@ -62,6 +62,13 @@ apply "frameworks/av" \
     "libcameraservice-Don-t-pass-NULL-args-on-setCallbacks-call.patch" \
     "Camera-Add-extensions-to-CameraClient.patch"
 
+apply_msg "📱 SurfaceFlinger patch for legacy devices"
+apply "frameworks/native" \
+    "SurfaceFlinger-Don-t-cleanup-resources-from-previous-frame.patch" \
+    "SurfaceFlinger-Don-t-cleanup-resources-from-previous-frame-on-virtual-display.patch" \
+    "SurfaceFlinger-avoiding-unnecessary-frame-skip-to-reduce-janks.patch" \
+    "SurfaceFlinger-Bring-back-support-for-disabling-backpressure-propagation.patch"
+
 apply_msg "📞 Telephony support for old RIL features"
 apply "frameworks/opt/telephony" \
     "telephony-avoid-SubscriptionManager-getUriForSubscriptionId-calls-with-invalid-subIds.patch" \
