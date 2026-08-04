@@ -18,5 +18,8 @@ apply "frameworks/base" "core-Sync-float-brightness-from-int-setting-on-first-bo
 apply_msg "🔑 Keystore backport"
 apply "frameworks/base" "keystore/frameworks_base/core-Add-DEVICE_INITIAL_SDK_INT-to-Build.VERSION.patch"
 
+apply_msg "💥 SystemUI crash when swipe lockscreen"
+apply "frameworks/base" "SystemUI-fix-NullPointerException-in-CollapsedStatusBarFragment-on-lockscreen-swipe.patch"
+
 apply_msg "📶 Wifi HAL"
 apply "hardware/broadcom/wlan" "WifiHAl-Fix-fatal-use-after-free-causing-infinite-POLLNVAL-loop.patch"
