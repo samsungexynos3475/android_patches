@@ -1,0 +1,58 @@
+From 7ad19bcf511b62e045ff4ce2c65c6348d1729480 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Tue, 4 Aug 2026 03:08:59 -0700
+Subject: [PATCH] SystemUI: fix NullPointerException in
+ CollapsedStatusBarFragment on lockscreen swipe
+
+When interacts with the lockscreen, UI transitions can trigger a TunerService update (`onTuningChanged`) in `CollapsedStatusBarFragment` to update the clock or status bar icons. If this callback fires after the fragment has been detached, `getContext()` returns null.
+
+Attempting to fetch resources using a null Context results in a NullPointerException, crashing SystemUI and causing a soft reboot.
+
+This commit fixes the issue by:
+1. Adding a missing `onDestroy()` method to properly unregister the `TunerService` callback, preventing the fragment from leaking and receiving updates after being destroyed.
+2. Adding a safeguard null-check inside `onTuningChanged` to return early if the fragment is already detached.
+
+Fixes the following crash:
+java.lang.NullPointerException: Attempt to invoke virtual method 'android.content.res.Resources android.content.Context.getResources()' on a null object reference
+	at com.android.systemui.statusbar.phone.StatusBarIconController.getIconBlacklist(StatusBarIconController.java:92)
+	at com.android.systemui.statusbar.phone.CollapsedStatusBarFragment.onTuningChanged(CollapsedStatusBarFragment.java:153)
+	at com.android.systemui.tuner.TunerServiceImpl.reloadSetting(TunerServiceImpl.java:334)
+	at com.android.systemui.tuner.TunerServiceImpl.access$400(TunerServiceImpl.java:59)
+	at com.android.systemui.tuner.TunerServiceImpl$Observer.onChange(TunerServiceImpl.java:378)
+
+Change-Id: I1f17723d66ad1e700eafdf2d7a8e45fc593252f3
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ .../statusbar/phone/CollapsedStatusBarFragment.java      | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/CollapsedStatusBarFragment.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/CollapsedStatusBarFragment.java
+index f91c1484..ad95ddbd 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/CollapsedStatusBarFragment.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/CollapsedStatusBarFragment.java
+@@ -89,6 +89,12 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
+         Dependency.get(TunerService.class).addTunable(this, StatusBarIconController.ICON_BLACKLIST);
+     }
+ 
++    @Override
++    public void onDestroy() {
++        super.onDestroy();
++        Dependency.get(TunerService.class).removeTunable(this);
++    }
++
+     @Override
+     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
+             Bundle savedInstanceState) {
+@@ -149,6 +155,9 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
+ 
+     @Override
+     public void onTuningChanged(String key, String newValue) {
++        if (getContext() == null) {
++            return;
++        }
+         boolean wasClockBlacklisted = mIsClockBlacklisted;
+         mIsClockBlacklisted = StatusBarIconController.getIconBlacklist(
+                 getContext(), newValue).contains("clock");
+-- 
+2.53.0
+
