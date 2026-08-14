@@ -52,6 +52,9 @@ apply "system/netd" \
 apply_msg "🌐 Opt-out for TCP info parsing on legacy kernels"
 apply "packages/modules/NetworkStack" "TcpSocketTracker-Opt-out-for-TCP-info-parsing-on-legacy-kernels.patch"
 
+apply_msg "💾 Remove memfd_create() version check"
+apply "art" "art-Conditionally-remove-version-check-for-memfd_create.patch"
+
 apply_msg "📶 Reset global pointer and skip vendor group"
 apply "hardware/broadcom/wlan" "WifiHAl-reset-global-pointer-to-NULL-to-fix-memory-leak.patch"
 
