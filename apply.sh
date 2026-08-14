@@ -34,6 +34,9 @@ apply "packages/modules/NetworkStack" "https://github.com/DerpFest-AOSP/packages
 apply_msg "🎨 Remove EGL requirement for legacy GPUs"
 apply "frameworks/native" "frameworks_native/renderengine-implement-ultimate-EGLConfig-fallback-for-legacy-Mali-GPUs.patch"
 
+apply_msg "💾 Remove memfd_create() version check"
+apply "art" "https://github.com/LineageOS/android_art/commit/dd1d9ba1851d96a8d4f55cd8e983fcee1519d953.patch"
+
 apply_msg "📶 Reset global pointer and skip vendor group"
 apply "hardware/broadcom/wlan" "hardware_broadcom_wlan/WifiHAl-reset-global-pointer-to-NULL-to-fix-memory-leak.patch"
 
