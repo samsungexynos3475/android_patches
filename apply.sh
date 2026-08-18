@@ -45,6 +45,9 @@ apply "art" "https://github.com/LineageOS/android_art/commit/dd1d9ba1851d96a8d4f
 apply_msg "📶 Reset global pointer and skip vendor group"
 apply "hardware/broadcom/wlan" "hardware_broadcom_wlan/WifiHAl-reset-global-pointer-to-NULL-to-fix-memory-leak.patch"
 
+apply_msg "📶 Restore mWifiLinkLayerStatsSupported check"
+apply "packages/modules/Wifi" "hardware_lineage_interfaces/wifi-resurrect-mWifiLinkLayerStatsSupported-counter"
+
 apply_msg "🎥 Restore camera HALv1 support"
 apply "frameworks/av" "https://github.com/samsungexynos3475/android_frameworks_av/compare/LineageOS:lineage-19.1...lineage-19.1.patch"
 
