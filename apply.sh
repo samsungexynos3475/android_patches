@@ -63,6 +63,9 @@ apply "art" "art-Conditionally-remove-version-check-for-memfd_create.patch"
 apply_msg "📶 Reset global pointer and skip vendor group"
 apply "hardware/broadcom/wlan" "WifiHAl-reset-global-pointer-to-NULL-to-fix-memory-leak.patch"
 
+apply_msg "📶 Restore mWifiLinkLayerStatsSupported check"
+apply "packages/modules/Wifi" "wifi-resurrect-mWifiLinkLayerStatsSupported-counter"
+
 apply_msg "🎥 Restore camera HAL v1 support"
 apply "frameworks/av" \
     "Camera-Restore-camera-HALv1-support-1-2.patch" \
