@@ -1,0 +1,27 @@
+From 59b6524e35ef4e7edce5ec27d8d2269e2b00f365 Mon Sep 17 00:00:00 2001
+From: Pierre-Hugues Husson <phh@phh.me>
+Date: Tue, 5 Jan 2021 23:44:00 +0100
+Subject: [PATCH] installd: unshared_oob didn't exist in O/P, so detect
+ its supported based on vndk version
+
+Change-Id: I0e9be103f974cb7acade6f14dd23d1a61947ff0a
+---
+ cmds/installd/migrate_legacy_obb_data.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cmds/installd/migrate_legacy_obb_data.sh b/cmds/installd/migrate_legacy_obb_data.sh
+index 7399681..9d5b73e 100644
+--- a/cmds/installd/migrate_legacy_obb_data.sh
++++ b/cmds/installd/migrate_legacy_obb_data.sh
+@@ -18,7 +18,7 @@
+ rm -rf /data/media/0/Android/obb/test_probe
+ mkdir -p /data/media/0/Android/obb/
+ touch /data/media/0/Android/obb/test_probe
+-if ! test -f /data/media/0/Android/obb/test_probe ; then
++if ! test -f /data/media/0/Android/obb/test_probe  || [ "$(adb shell getprop ro.vndk.version)" -le 28 ]; then
+   log -p i -t migrate_legacy_obb_data "No support for 'unshared_obb'. Not migrating"
+   rm -rf /data/media/0/Android/obb/test_probe
+   exit 0
+-- 
+2.43.0
+

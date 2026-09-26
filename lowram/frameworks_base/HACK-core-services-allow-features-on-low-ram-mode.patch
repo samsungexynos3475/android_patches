@@ -1,0 +1,61 @@
+From c8b5317b58e63cc6b64224b9e1ff85569c0ef1c0 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Tue, 14 Jul 2026 19:00:20 -0700
+Subject: [PATCH] HACK: core/services: allow features on low ram mode
+
+Enable chat heads/bubbles, freeform, notifications dots, PiP, screen off animation and split screen
+
+Change-Id: I00d9fb5f7ba6bca1596880a5a39da995bdf842a6
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ core/java/android/app/ActivityTaskManager.java             | 7 +------
+ .../com/android/server/display/DisplayPowerController.java | 2 +-
+ .../com/android/server/notification/BubbleExtractor.java   | 1 -
+ 3 files changed, 2 insertions(+), 8 deletions(-)
+
+diff --git a/core/java/android/app/ActivityTaskManager.java b/core/java/android/app/ActivityTaskManager.java
+index f17d5b7c..e09a1a54 100644
+--- a/core/java/android/app/ActivityTaskManager.java
++++ b/core/java/android/app/ActivityTaskManager.java
+@@ -244,12 +244,7 @@ public class ActivityTaskManager {
+      * E.g. freeform, split-screen, picture-in-picture.
+      */
+     public static boolean supportsMultiWindow(Context context) {
+-        // On watches, multi-window is used to present essential system UI, and thus it must be
+-        // supported regardless of device memory characteristics.
+-        boolean isWatch = context.getPackageManager().hasSystemFeature(
+-                PackageManager.FEATURE_WATCH);
+-        return (!ActivityManager.isLowRamDeviceStatic() || isWatch)
+-                && Resources.getSystem().getBoolean(
++        return Resources.getSystem().getBoolean(
+                 com.android.internal.R.bool.config_supportsMultiWindow);
+     }
+ 
+diff --git a/services/core/java/com/android/server/display/DisplayPowerController.java b/services/core/java/com/android/server/display/DisplayPowerController.java
+index 864ea43c..924bbb03 100644
+--- a/services/core/java/com/android/server/display/DisplayPowerController.java
++++ b/services/core/java/com/android/server/display/DisplayPowerController.java
+@@ -658,7 +658,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+ 
+         setUpAutoBrightness(resources, handler);
+ 
+-        mColorFadeEnabled = !ActivityManager.isLowRamDeviceStatic();
++        mColorFadeEnabled = true;
+         mColorFadeFadesConfig = resources.getBoolean(
+                 com.android.internal.R.bool.config_animateScreenLights);
+ 
+diff --git a/services/core/java/com/android/server/notification/BubbleExtractor.java b/services/core/java/com/android/server/notification/BubbleExtractor.java
+index a561390a..48b3a232 100644
+--- a/services/core/java/com/android/server/notification/BubbleExtractor.java
++++ b/services/core/java/com/android/server/notification/BubbleExtractor.java
+@@ -78,7 +78,6 @@ public class BubbleExtractor implements NotificationSignalExtractor {
+         }
+ 
+         boolean notifCanPresentAsBubble = canPresentAsBubble(record)
+-                && !mActivityManager.isLowRamDevice()
+                 && record.isConversation()
+                 && record.getShortcutInfo() != null
+                 && (record.getNotification().flags & FLAG_FOREGROUND_SERVICE) == 0;
+-- 
+2.43.0
+

@@ -1,0 +1,46 @@
+From 4416107172d70377010c378971b6754d9dc79667 Mon Sep 17 00:00:00 2001
+From: Juhyung Park <qkrwngud825@gmail.com>
+Date: Sun, 22 May 2022 04:20:41 +0900
+Subject: [PATCH] surfaceflinger: Scheduler: add more window types to
+ consider NoVote
+
+These types don't need high refresh rate.
+
+Change-Id: I5170cbb7ed5de8c97d8e25d08a567af4250aef86
+Signed-off-by: Juhyung Park <qkrwngud825@gmail.com>
+Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
+---
+ services/surfaceflinger/Scheduler/Scheduler.cpp | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/services/surfaceflinger/Scheduler/Scheduler.cpp b/services/surfaceflinger/Scheduler/Scheduler.cpp
+index 8b1a5d9..c49b925 100644
+--- a/services/surfaceflinger/Scheduler/Scheduler.cpp
++++ b/services/surfaceflinger/Scheduler/Scheduler.cpp
+@@ -500,11 +500,21 @@ void Scheduler::registerLayer(Layer* layer) {
+     using WindowType = gui::WindowInfo::Type;
+ 
+     scheduler::LayerHistory::LayerVoteType voteType;
++    const auto windowType = layer->getWindowType();
+ 
+     if (!mFeatures.test(Feature::kContentDetection) ||
+-        layer->getWindowType() == WindowType::STATUS_BAR) {
++        windowType == WindowType::STATUS_BAR ||
++        windowType == WindowType::SYSTEM_ALERT ||
++        windowType == WindowType::TOAST ||
++        windowType == WindowType::SYSTEM_DIALOG ||
++        windowType == WindowType::KEYGUARD_DIALOG ||
++        windowType == WindowType::INPUT_METHOD ||
++        windowType == WindowType::INPUT_METHOD_DIALOG ||
++        windowType == WindowType::NAVIGATION_BAR ||
++        windowType == WindowType::VOLUME_OVERLAY ||
++        windowType == WindowType::NAVIGATION_BAR_PANEL) {
+         voteType = scheduler::LayerHistory::LayerVoteType::NoVote;
+-    } else if (layer->getWindowType() == WindowType::WALLPAPER) {
++    } else if (windowType == WindowType::WALLPAPER) {
+         // Running Wallpaper at Min is considered as part of content detection.
+         voteType = scheduler::LayerHistory::LayerVoteType::Min;
+     } else {
+-- 
+2.43.0
+

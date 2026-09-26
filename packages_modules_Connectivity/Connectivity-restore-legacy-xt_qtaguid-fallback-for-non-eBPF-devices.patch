@@ -1,0 +1,114 @@
+From b251ec9282f35b00923686e79dd6c885811c97a3 Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 22:35:01 +0000
+Subject: [PATCH] Connectivity: restore xt_qtaguid fallback for non-eBPF
+ devices
+
+Android 13 strictly enforces eBPF for network statistics and socket tagging,
+removing the xt_qtaguid fallbacks previously found in netd,
+libqtaguid, and NetworkStatsFactory. This breaks devices running older
+kernels that lack eBPF support.
+
+This commit restore xt_qtaguid behavior for devices without eBPF by
+implementing the following:
+1. NetworkStatsFactory: Dynamically determine BPF support by checking if
+   the BPF stats map file exists, mirroring the Android 12 behavior. This
+   allows the framework to fall back to parsing /proc/net/xt_qtaguid/stats.
+2. BpfNetMaps: Catch and ignore ENOSYS and EOPNOTSUPP errors in maybeThrow
+   to prevent NetworkPolicyManagerService from crashing when it attempts
+   to update BPF maps on legacy kernels.
+3. TrafficStats JNI: Re-implement the Android 12 libqtaguid write_ctrl
+   logic directly within tagSocketFd and untagSocketFd. If the device
+   relies on xt_qtaguid, sockets are tagged via /proc/net/xt_qtaguid/ctrl
+   rather than crashing on BPF native calls.
+
+This works in tandem with restoring the non-bpf support in
+BandwidthController on the netd side.
+
+Generated with Antigravity (https://antigravity.google) using Gemini 3.1 Pro (High)
+
+Change-Id: I6ce48e250e283e6cc3c213f7202676c1188f1254
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ framework-t/jni/android_net_TrafficStats.cpp  | 26 +++++++++++++++++--
+ .../server/net/NetworkStatsFactory.java       |  2 +-
+ .../src/com/android/server/BpfNetMaps.java    |  3 +++
+ 3 files changed, 28 insertions(+), 3 deletions(-)
+
+diff --git a/framework-t/jni/android_net_TrafficStats.cpp b/framework-t/jni/android_net_TrafficStats.cpp
+index f3c58b1..0597fba 100644
+--- a/framework-t/jni/android_net_TrafficStats.cpp
++++ b/framework-t/jni/android_net_TrafficStats.cpp
+@@ -18,18 +18,40 @@
+ #include <android/multinetwork.h>
+ #include <nativehelper/JNIHelp.h>
+ 
++#include <fcntl.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <unistd.h>
++#include <string.h>
++#include <stdio.h>
++#include <errno.h>
++
+ namespace android {
+ 
++static int write_ctrl(const char* cmd) {
++    int fd = open("/proc/net/xt_qtaguid/ctrl", O_WRONLY | O_CLOEXEC);
++    if (fd < 0) return -errno;
++    int res = write(fd, cmd, strlen(cmd));
++    int err = errno;
++    close(fd);
++    return (res < 0) ? -err : 0;
++}
++
+ static jint tagSocketFd(JNIEnv* env, jclass, jobject fileDescriptor, jint tag, jint uid) {
+   int fd = AFileDescriptor_getFd(env, fileDescriptor);
+   if (fd == -1) return -EBADF;
+-  return android_tag_socket_with_uid(fd, tag, uid);
++  char cmd[128];
++  uint64_t kTag = ((uint64_t)tag << 32);
++  snprintf(cmd, sizeof(cmd), "t %d %llu %d", fd, (unsigned long long)kTag, uid);
++  return write_ctrl(cmd);
+ }
+ 
+ static jint untagSocketFd(JNIEnv* env, jclass, jobject fileDescriptor) {
+   int fd = AFileDescriptor_getFd(env, fileDescriptor);
+   if (fd == -1) return -EBADF;
+-  return android_untag_socket(fd);
++  char cmd[128];
++  snprintf(cmd, sizeof(cmd), "u %d", fd);
++  return write_ctrl(cmd);
+ }
+ 
+ static const JNINativeMethod gMethods[] = {
+diff --git a/service-t/src/com/android/server/net/NetworkStatsFactory.java b/service-t/src/com/android/server/net/NetworkStatsFactory.java
+index 3b93f1a..6f63f78 100644
+--- a/service-t/src/com/android/server/net/NetworkStatsFactory.java
++++ b/service-t/src/com/android/server/net/NetworkStatsFactory.java
+@@ -164,7 +164,7 @@ public class NetworkStatsFactory {
+     }
+ 
+     public NetworkStatsFactory(@NonNull Context ctx) {
+-        this(ctx, new File("/proc/"), true);
++        this(ctx, new File("/proc/"), new File("/sys/fs/bpf/map_netd_app_uid_stats_map").exists());
+     }
+ 
+     @VisibleForTesting
+diff --git a/service/src/com/android/server/BpfNetMaps.java b/service/src/com/android/server/BpfNetMaps.java
+index c006bc6..26fbe34 100644
+--- a/service/src/com/android/server/BpfNetMaps.java
++++ b/service/src/com/android/server/BpfNetMaps.java
+@@ -68,6 +68,9 @@ public class BpfNetMaps {
+ 
+     private void maybeThrow(final int err, final String msg) {
+         if (err != 0) {
++            if (err == android.system.OsConstants.ENOSYS || err == EOPNOTSUPP) {
++                return;
++            }
+             throw new ServiceSpecificException(err, msg + ": " + Os.strerror(err));
+         }
+     }
+-- 
+2.43.0
+

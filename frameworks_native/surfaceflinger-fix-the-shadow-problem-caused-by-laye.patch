@@ -1,0 +1,52 @@
+From 1ac63ee966d3263eec0cd98f11f2bec34e180352 Mon Sep 17 00:00:00 2001
+From: xinying1 <xinying1@xiaomi.corp-partner.google.com>
+Date: Tue, 26 Apr 2022 14:41:30 +0800
+Subject: [PATCH] surfaceflinger: fix the shadow problem caused by layer
+ parent switching
+
+When the parent of a layer changes, shadowRadius should
+not be directly passed in the computBounds here.
+
+When the layer's parent changes, for example, open an app
+in freeform. If the app exits the current ActivityRecord, it will
+trigger the recent task request screen capture of the
+current app, temporarily switch the task of the app to
+"Screenshot Parent", and then switch back. This operation
+will cause the shadow of the task to be passed to the children layers
+through CanDrawShadows, i.e., the shadow of non Container layer
+is wrongly passed to its children layers.
+Therefore, there is a problem in shadow drawing.
+
+We should judge whether shadowRadius needs to be passed
+at this time through CanDrawShadows. If not, pass 0.f.
+
+Otherwise, the shadow will be painted repeatedly.
+
+bug:215476160 in partnerissuetracker
+
+Signed-off-by: xinying1 <xinying1@xiaomi.corp-partner.google.com>
+Change-Id: Id4b6c8bcc79aa68f96d0c4c655ea853361ed1e7c
+Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
+---
+ services/surfaceflinger/Layer.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/services/surfaceflinger/Layer.cpp b/services/surfaceflinger/Layer.cpp
+index aff94d1..c2b0a11 100644
+--- a/services/surfaceflinger/Layer.cpp
++++ b/services/surfaceflinger/Layer.cpp
+@@ -1587,8 +1587,10 @@ ssize_t Layer::removeChild(const sp<Layer>& layer) {
+ void Layer::setChildrenDrawingParent(const sp<Layer>& newParent) {
+     for (const sp<Layer>& child : mDrawingChildren) {
+         child->mDrawingParent = newParent;
++        const float parentShadowRadius =
++                newParent->canDrawShadows() ? 0.f : newParent->mEffectiveShadowRadius;
+         child->computeBounds(newParent->mBounds, newParent->mEffectiveTransform,
+-                             newParent->mEffectiveShadowRadius);
++                             parentShadowRadius);
+     }
+ }
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,677 @@
+From f85e8cb0138c0d5d7220ab6664d9b48d7bcf791d Mon Sep 17 00:00:00 2001
+From: Derek <nielson925@gmail.com>
+Date: Thu, 23 Jun 2022 22:30:47 -0600
+Subject: [PATCH] Revert "Remove compat version of ImsService binding"
+
+This reverts commit f07772fa1b04a641b6bfc6775ada025bedf93a5f.
+
+Change-Id: I4c56cb1c4e7619eedaf563da0c36bd472e71774f
+---
+ .../com/android/internal/telephony/Phone.java |  85 +++++++++--
+ .../internal/telephony/PhoneFactory.java      |   6 +-
+ .../internal/telephony/ims/ImsResolver.java   | 101 +++++++++----
+ .../telephony/ims/ImsServiceController.java   |   9 +-
+ .../ims/ImsServiceControllerCompat.java       |   2 +-
+ .../ims/ImsServiceControllerStaticCompat.java | 135 ++++++++++++++++++
+ .../ims/ImsServiceInterfaceAdapter.java       | 128 +++++++++++++++++
+ 7 files changed, 427 insertions(+), 39 deletions(-)
+ create mode 100644 src/java/com/android/internal/telephony/ims/ImsServiceControllerStaticCompat.java
+ create mode 100644 src/java/com/android/internal/telephony/ims/ImsServiceInterfaceAdapter.java
+
+diff --git a/src/java/com/android/internal/telephony/Phone.java b/src/java/com/android/internal/telephony/Phone.java
+index 4afccd1..bcf7846 100644
+--- a/src/java/com/android/internal/telephony/Phone.java
++++ b/src/java/com/android/internal/telephony/Phone.java
+@@ -16,12 +16,15 @@
+ 
+ package com.android.internal.telephony;
+ 
++import android.util.Log;
+ import android.annotation.NonNull;
+ import android.annotation.Nullable;
+ import android.app.BroadcastOptions;
+ import android.compat.annotation.UnsupportedAppUsage;
++import android.content.BroadcastReceiver;
+ import android.content.Context;
+ import android.content.Intent;
++import android.content.IntentFilter;
+ import android.content.SharedPreferences;
+ import android.content.res.Configuration;
+ import android.net.Uri;
+@@ -138,11 +141,39 @@ import java.util.stream.Collectors;
+ 
+ public abstract class Phone extends Handler implements PhoneInternalInterface {
+     private static final String LOG_TAG = "Phone";
++    private final boolean mIsDynamicBinding = SystemProperties.getBoolean("ro.ims.dynamic_bind",true);
+ 
+     protected final static Object lockForRadioTechnologyChange = new Object();
+ 
+     protected final int USSD_MAX_QUEUE = 10;
+ 
++    private BroadcastReceiver mImsIntentReceiver = new BroadcastReceiver() {
++        @Override
++        public void onReceive(Context context, Intent intent) {
++            Rlog.d(LOG_TAG, "mImsIntentReceiver: action " + intent.getAction());
++            if (intent.hasExtra(ImsManager.EXTRA_PHONE_ID)) {
++                int extraPhoneId = intent.getIntExtra(ImsManager.EXTRA_PHONE_ID,
++                        SubscriptionManager.INVALID_PHONE_INDEX);
++                Rlog.d(LOG_TAG, "mImsIntentReceiver: extraPhoneId = " + extraPhoneId);
++                if (extraPhoneId == SubscriptionManager.INVALID_PHONE_INDEX ||
++                        extraPhoneId != getPhoneId()) {
++                    return;
++                }
++            }
++
++            synchronized (Phone.lockForRadioTechnologyChange) {
++                if (intent.getAction().equals(ImsManager.ACTION_IMS_SERVICE_UP)) {
++                    mImsServiceReady = true;
++                    updateImsPhone();
++                    ImsManager.getInstance(mContext, mPhoneId).updateImsServiceConfig();
++                } else if (intent.getAction().equals(ImsManager.ACTION_IMS_SERVICE_DOWN)) {
++                    mImsServiceReady = false;
++                    updateImsPhone();
++                }
++            }
++        }
++    };
++
+     // Key used to read and write the saved network selection numeric value
+     public static final String NETWORK_SELECTION_KEY = "network_selection_key";
+     // Key used to read and write the saved network selection operator name
+@@ -357,6 +388,8 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+     protected int mPhoneId;
+ 
+     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.R, trackingBug = 170729553)
++    private boolean mImsServiceReady = false;
++    @UnsupportedAppUsage
+     protected Phone mImsPhone = null;
+ 
+     private final AtomicReference<RadioCapability> mRadioCapability =
+@@ -645,20 +678,34 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+     }
+ 
+     /**
+-     * Start setup of ImsPhone, which will start trying to connect to the ImsResolver. Will not be
+-     * called if this device does not support FEATURE_IMS_TELEPHONY.
++     * Start listening for IMS service UP/DOWN events. If using the new ImsResolver APIs, we should
++     * always be setting up ImsPhones.
+      */
+-    public void createImsPhone() {
++    public void startMonitoringImsService() {
+         if (getPhoneType() == PhoneConstants.PHONE_TYPE_SIP) {
+             return;
+         }
+ 
+         synchronized(Phone.lockForRadioTechnologyChange) {
+-            if (mImsPhone == null) {
+-                mImsPhone = PhoneFactory.makeImsPhone(mNotifier, this);
+-                CallManager.getInstance().registerPhone(mImsPhone);
+-                mImsPhone.registerForSilentRedial(
+-                        this, EVENT_INITIATE_SILENT_REDIAL, null);
++            IntentFilter filter = new IntentFilter();
++            ImsManager imsManager = ImsManager.getInstance(mContext, getPhoneId());
++            // Don't listen to deprecated intents using the new dynamic binding.
++            if (imsManager != null && !mIsDynamicBinding) {
++                filter.addAction(ImsManager.ACTION_IMS_SERVICE_UP);
++                filter.addAction(ImsManager.ACTION_IMS_SERVICE_DOWN);
++                mContext.registerReceiver(mImsIntentReceiver, filter);
++            }
++
++            // Monitor IMS service - but first poll to see if already up (could miss
++            // intent). Also, when using new ImsResolver APIs, the service will be available soon,
++            // so start trying to bind.
++            if (imsManager != null) {
++                // If it is dynamic binding, kick off ImsPhone creation now instead of waiting for
++                // the service to be available.
++                if (mIsDynamicBinding || imsManager.isServiceAvailable()) {
++                    mImsServiceReady = true;
++                    updateImsPhone();
++                }
+             }
+         }
+     }
+@@ -4089,6 +4136,28 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+     public void dispose() {
+     }
+ 
++    private void updateImsPhone() {
++        Rlog.d(LOG_TAG, "updateImsPhone"
++                + " mImsServiceReady=" + mImsServiceReady);
++
++        if (mImsServiceReady && (mImsPhone == null)) {
++            mImsPhone = PhoneFactory.makeImsPhone(mNotifier, this);
++            CallManager.getInstance().registerPhone(mImsPhone);
++            mImsPhone.registerForSilentRedial(
++                    this, EVENT_INITIATE_SILENT_REDIAL, null);
++        } else if (!mImsServiceReady && (mImsPhone != null)) {
++            CallManager.getInstance().unregisterPhone(mImsPhone);
++            mImsPhone.unregisterForSilentRedial(this);
++
++            mImsPhone.dispose();
++            // Potential GC issue if someone keeps a reference to ImsPhone.
++            // However: this change will make sure that such a reference does
++            // not access functions through NULL pointer.
++            //mImsPhone.removeReferences();
++            mImsPhone = null;
++        }
++    }
++
+     /**
+      * Dials a number.
+      *
+diff --git a/src/java/com/android/internal/telephony/PhoneFactory.java b/src/java/com/android/internal/telephony/PhoneFactory.java
+index 3361b74..a29be50 100644
+--- a/src/java/com/android/internal/telephony/PhoneFactory.java
++++ b/src/java/com/android/internal/telephony/PhoneFactory.java
+@@ -16,6 +16,7 @@
+ 
+ package com.android.internal.telephony;
+ 
++import android.util.Log;
+ import static com.android.internal.telephony.PhoneConstants.PHONE_TYPE_CDMA;
+ import static com.android.internal.telephony.PhoneConstants.PHONE_TYPE_CDMA_LTE;
+ 
+@@ -46,6 +47,7 @@ import com.android.internal.telephony.data.PhoneSwitcher;
+ import com.android.internal.telephony.data.TelephonyNetworkFactory;
+ import com.android.internal.telephony.euicc.EuiccCardController;
+ import com.android.internal.telephony.euicc.EuiccController;
++import com.android.internal.telephony.ims.ImsResolver;
+ import com.android.internal.telephony.imsphone.ImsPhone;
+ import com.android.internal.telephony.imsphone.ImsPhoneFactory;
+ import com.android.internal.telephony.metrics.MetricsCollector;
+@@ -246,7 +248,7 @@ public class PhoneFactory {
+                     // Default phone must be ready before ImsPhone is created because ImsService
+                     // might need it when it is being opened.
+                     for (int i = 0; i < numPhones; i++) {
+-                        sPhones[i].createImsPhone();
++                        sPhones[i].startMonitoringImsService();
+                     }
+                 } else {
+                     Rlog.i(LOG_TAG, "IMS is not supported on this device, skipping ImsResolver.");
+@@ -305,7 +307,7 @@ public class PhoneFactory {
+                 sPhones[i] = createPhone(context, i);
+                 if (context.getPackageManager().hasSystemFeature(
+                         PackageManager.FEATURE_TELEPHONY_IMS)) {
+-                    sPhones[i].createImsPhone();
++                    sPhones[i].startMonitoringImsService();
+                 }
+                 sTelephonyNetworkFactories[i] = new TelephonyNetworkFactory(
+                         Looper.myLooper(), sPhones[i]);
+diff --git a/src/java/com/android/internal/telephony/ims/ImsResolver.java b/src/java/com/android/internal/telephony/ims/ImsResolver.java
+index c3331d9..1cb5e41 100644
+--- a/src/java/com/android/internal/telephony/ims/ImsResolver.java
++++ b/src/java/com/android/internal/telephony/ims/ImsResolver.java
+@@ -75,6 +75,7 @@ import java.util.concurrent.CompletableFuture;
+ import java.util.concurrent.LinkedBlockingQueue;
+ import java.util.concurrent.TimeUnit;
+ import java.util.stream.Collectors;
++import android.os.SystemProperties;
+ 
+ /**
+  * Creates a list of ImsServices that are available to bind to based on the Device configuration
+@@ -417,6 +418,22 @@ public class ImsResolver implements ImsServiceController.ImsServiceControllerCal
+                 }
+             };
+ 
++
++    private ImsServiceControllerFactory mImsServiceControllerFactoryStaticBindingCompat =
++            new ImsServiceControllerFactory() {
++                @Override
++                public String getServiceInterface() {
++                    // The static method of binding does not use service interfaces.
++                    return null;
++                }
++
++                @Override
++                public ImsServiceController create(Context context, ComponentName componentName,
++                        ImsServiceController.ImsServiceControllerCallbacks callbacks,ImsFeatureBinderRepository repo) {
++                    return new ImsServiceControllerStaticCompat(context, componentName, callbacks,repo);
++                }
++            };
++
+     private ImsDynamicQueryManagerFactory mDynamicQueryManagerFactory =
+             ImsServiceFeatureQueryManager::new;
+ 
+@@ -432,6 +449,7 @@ public class ImsResolver implements ImsServiceController.ImsServiceControllerCal
+     // ImsServiceController callbacks.
+     private final Object mBoundServicesLock = new Object();
+     private int mNumSlots;
++    private final boolean mIsDynamicBinding = SystemProperties.getBoolean("ro.ims.dynamic_bind",true);
+     // Array index corresponds to slot, per slot there is a feature->package name mapping.
+     // should only be accessed from handler
+     private final SparseArray<Map<Integer, String>> mCarrierServices;
+@@ -578,18 +596,25 @@ public class ImsResolver implements ImsServiceController.ImsServiceControllerCal
+     // not locked, only accessed on a handler thread.
+     // Active ImsServiceControllers, which are bound to ImsServices.
+     private final Map<ComponentName, ImsServiceController> mActiveControllers = new HashMap<>();
++    // Only used as the Component name for legacy ImsServices that did not use dynamic binding.
++    private final ComponentName mStaticComponent;
+     private ImsServiceFeatureQueryManager mFeatureQueryManager;
+     private final SparseIntArray mSlotIdToSubIdMap;
+ 
+     public ImsResolver(Context context, String defaultMmTelPackageName,
+             String defaultRcsPackageName, int numSlots, ImsFeatureBinderRepository repo,
+             Looper looper) {
+-        Log.i(TAG, "device MMTEL package: " + defaultMmTelPackageName + ", device RCS package:"
+-                + defaultRcsPackageName);
+         mContext = context;
+         mNumSlots = numSlots;
+         mRepo = repo;
+         mReceiverContext = context.createContextAsUser(UserHandle.ALL, 0 /*flags*/);
++        mStaticComponent = new ComponentName(mContext, ImsResolver.class);
++
++	if(!mIsDynamicBinding)
++		defaultMmTelPackageName = mStaticComponent.getPackageName();
++
++        Log.i(TAG, "device MMTEL package: " + defaultMmTelPackageName + ", device RCS package:"
++                + defaultRcsPackageName);
+ 
+         mHandler = new ResolverHandler(looper);
+         mRunnableExecutor = new HandlerExecutor(mHandler);
+@@ -643,26 +668,32 @@ public class ImsResolver implements ImsServiceController.ImsServiceControllerCal
+         mFeatureQueryManager = mDynamicQueryManagerFactory.create(mContext, mDynamicQueryListener);
+ 
+         updateInstalledServicesCache();
++        
++	if(mIsDynamicBinding) {
++		IntentFilter appChangedFilter = new IntentFilter();
++        	appChangedFilter.addAction(Intent.ACTION_PACKAGE_CHANGED);
++        	appChangedFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
++        	appChangedFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
++        	appChangedFilter.addDataScheme("package");
++        	mReceiverContext.registerReceiver(mAppChangedReceiver, appChangedFilter);
++        	 mReceiverContext.registerReceiver(mConfigChangedReceiver, new IntentFilter(
++        	        CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED));
++
++        	UserManager userManager = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
++        	if (userManager.isUserUnlocked()) {
++        	    mHandler.obtainMessage(HANDLER_BOOT_COMPLETE, null).sendToTarget();
++        	} else {
++        	    mReceiverContext.registerReceiver(mBootCompleted, new IntentFilter(
++        	            Intent.ACTION_BOOT_COMPLETED));
++        	    if (userManager.isUserUnlocked()) {
++        	        mHandler.obtainMessage(HANDLER_BOOT_COMPLETE, null).sendToTarget();
++        	    }
++        	}
++	}
++
++	else
++        	mHandler.obtainMessage(HANDLER_ADD_PACKAGE, mStaticComponent.getPackageName()).sendToTarget();
+ 
+-        IntentFilter appChangedFilter = new IntentFilter();
+-        appChangedFilter.addAction(Intent.ACTION_PACKAGE_CHANGED);
+-        appChangedFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+-        appChangedFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
+-        appChangedFilter.addDataScheme("package");
+-        mReceiverContext.registerReceiver(mAppChangedReceiver, appChangedFilter);
+-        mReceiverContext.registerReceiver(mConfigChangedReceiver, new IntentFilter(
+-                CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED));
+-
+-        UserManager userManager = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
+-        if (userManager.isUserUnlocked()) {
+-            mHandler.obtainMessage(HANDLER_BOOT_COMPLETE, null).sendToTarget();
+-        } else {
+-            mReceiverContext.registerReceiver(mBootCompleted, new IntentFilter(
+-                    Intent.ACTION_BOOT_COMPLETED));
+-            if (userManager.isUserUnlocked()) {
+-                mHandler.obtainMessage(HANDLER_BOOT_COMPLETE, null).sendToTarget();
+-            }
+-        }
+ 
+         // Update the package names of the carrier ImsServices if they do not exist already and
+         // possibly bind if carrier configs exist. Otherwise wait for CarrierConfigChanged
+@@ -1707,14 +1738,30 @@ public class ImsResolver implements ImsServiceController.ImsServiceControllerCal
+         }
+     }
+ 
+-    // Return the ImsServiceInfo specified for the package name. If the package name is null,
+-    // get all packages that support ImsServices.
+     private List<ImsServiceInfo> getImsServiceInfo(String packageName) {
+         List<ImsServiceInfo> infos = new ArrayList<>();
+-        // Search for Current ImsService implementations
+-        infos.addAll(searchForImsServices(packageName, mImsServiceControllerFactory));
+-        // Search for compat ImsService Implementations
+-        infos.addAll(searchForImsServices(packageName, mImsServiceControllerFactoryCompat));
++        if (!mIsDynamicBinding) {
++            // always return the same ImsService info.
++            infos.addAll(getStaticImsService());
++        } else {
++            // Search for Current ImsService implementations
++            infos.addAll(searchForImsServices(packageName, mImsServiceControllerFactory));
++            // Search for compat ImsService Implementations
++            infos.addAll(searchForImsServices(packageName, mImsServiceControllerFactoryCompat));
++        }
++        return infos;
++    }
++
++
++    private List<ImsServiceInfo> getStaticImsService() {
++        List<ImsServiceInfo> infos = new ArrayList<>();
++
++        ImsServiceInfo info = new ImsServiceInfo();
++        info.name = mStaticComponent;
++        info.controllerFactory = mImsServiceControllerFactoryStaticBindingCompat;
++        info.addFeatureForAllSlots(mNumSlots,ImsFeature.FEATURE_EMERGENCY_MMTEL);
++        info.addFeatureForAllSlots(mNumSlots,ImsFeature.FEATURE_MMTEL);
++        infos.add(info);
+         return infos;
+     }
+ 
+diff --git a/src/java/com/android/internal/telephony/ims/ImsServiceController.java b/src/java/com/android/internal/telephony/ims/ImsServiceController.java
+index 92e7d71..98080de 100644
+--- a/src/java/com/android/internal/telephony/ims/ImsServiceController.java
++++ b/src/java/com/android/internal/telephony/ims/ImsServiceController.java
+@@ -387,7 +387,7 @@ public class ImsServiceController {
+                 mLocalLog.log("binding " + imsFeatureSet);
+                 Log.i(LOG_TAG, "Binding ImsService:" + mComponentName);
+                 try {
+-                    boolean bindSucceeded = mContext.bindService(imsServiceIntent,
++                    boolean bindSucceeded = startBindToService(imsServiceIntent,
+                             mImsServiceConnection, serviceFlags);
+                     if (!bindSucceeded) {
+                         mLocalLog.log("    binding failed, retrying in "
+@@ -424,6 +424,13 @@ public class ImsServiceController {
+                 features.remove(feature);
+             }
+         }
++     }
++     /* Starts the bind to the ImsService. Overridden by subclasses that need to access the service
++     * in a different fashion.
++     */
++    protected boolean startBindToService(Intent intent, ImsServiceConnection connection,
++            int flags) {
++        return mContext.bindService(intent, connection, flags);
+     }
+ 
+     /**
+diff --git a/src/java/com/android/internal/telephony/ims/ImsServiceControllerCompat.java b/src/java/com/android/internal/telephony/ims/ImsServiceControllerCompat.java
+index 13ec750..78621a9 100644
+--- a/src/java/com/android/internal/telephony/ims/ImsServiceControllerCompat.java
++++ b/src/java/com/android/internal/telephony/ims/ImsServiceControllerCompat.java
+@@ -234,7 +234,7 @@ public class ImsServiceControllerCompat extends ImsServiceController {
+         return mServiceController != null;
+     }
+ 
+-    private MmTelInterfaceAdapter getInterface(int slotId)
++    protected MmTelInterfaceAdapter getInterface(int slotId)
+             throws RemoteException {
+         IImsMMTelFeature feature = mServiceController.createMMTelFeature(slotId);
+         if (feature == null) {
+diff --git a/src/java/com/android/internal/telephony/ims/ImsServiceControllerStaticCompat.java b/src/java/com/android/internal/telephony/ims/ImsServiceControllerStaticCompat.java
+new file mode 100644
+index 0000000..b8b66ee
+--- /dev/null
++++ b/src/java/com/android/internal/telephony/ims/ImsServiceControllerStaticCompat.java
+@@ -0,0 +1,135 @@
++/*
++ * Copyright (C) 2018 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License
++ */
++
++package com.android.internal.telephony.ims;
++
++import android.content.ComponentName;
++import android.content.Context;
++import android.content.Intent;
++import android.content.ServiceConnection;
++import android.os.IBinder;
++import android.os.RemoteException;
++import android.os.ServiceManager;
++import android.util.Log;
++import com.android.ims.ImsFeatureBinderRepository;
++
++import com.android.ims.internal.IImsFeatureStatusCallback;
++import com.android.ims.internal.IImsService;
++import android.telephony.ims.feature.ImsFeature;
++
++/**
++ * A compat layer for communicating with older devices that still used the ServiceManager to get
++ * the ImsService.
++ */
++
++public class ImsServiceControllerStaticCompat extends ImsServiceControllerCompat {
++
++    private static final String TAG = "ImsSCStaticCompat";
++
++    private static final String IMS_SERVICE_NAME = "ims";
++
++    private class ImsDeathRecipient implements IBinder.DeathRecipient {
++
++        private ComponentName mComponentName;
++        private ServiceConnection mServiceConnection;
++
++        ImsDeathRecipient(ComponentName name, ServiceConnection conn) {
++            mComponentName = name;
++            mServiceConnection = conn;
++        }
++
++        @Override
++        public void binderDied() {
++            Log.e(TAG, "ImsService(" + mComponentName + ") died. Restarting...");
++            // This is hacky... ImsServiceController uses the traditional service binding procedure,
++            // so we have to emulate it when using a persistent service.
++            mServiceConnection.onBindingDied(mComponentName);
++        }
++    }
++
++    private IImsService mImsServiceCompat = null;
++    private ImsDeathRecipient mImsDeathRecipient = null;
++
++    public ImsServiceControllerStaticCompat(Context context, ComponentName componentName,
++            ImsServiceController.ImsServiceControllerCallbacks callbacks,ImsFeatureBinderRepository repo) {
++        super(context, componentName, callbacks,repo);
++    }
++
++    @Override
++    public boolean startBindToService(Intent intent, ImsServiceConnection connection, int flags) {
++        IBinder binder = ServiceManager.checkService(IMS_SERVICE_NAME);
++
++        if (binder == null) {
++            return false;
++        }
++        // This is a little hacky, but we are going to call the onServiceConnected to "pretend" like
++        // bindService has completed here, which will pass the binder to setServiceController and
++        // set up all supporting structures.
++        ComponentName name = new ComponentName(mContext, ImsServiceControllerStaticCompat.class);
++        connection.onServiceConnected(name, binder);
++        try {
++            mImsDeathRecipient = new ImsDeathRecipient(name, connection);
++            binder.linkToDeath(mImsDeathRecipient, 0);
++        } catch (RemoteException e) {
++            // The binder connection is already dead.. signal to the ImsServiceController to retry.
++            mImsDeathRecipient.binderDied();
++            mImsDeathRecipient = null;
++        }
++        return true;
++    }
++
++    @Override
++    protected void setServiceController(IBinder serviceController) {
++        if (serviceController == null) {
++            // The service controller has been set to null, meaning it has been unbound or died.
++            // Unlink if needed.
++            if (mImsServiceCompat != null) {
++                mImsServiceCompat.asBinder().unlinkToDeath(mImsDeathRecipient, 0);
++            }
++            mImsDeathRecipient = null;
++        }
++        mImsServiceCompat = IImsService.Stub.asInterface(serviceController);
++    }
++
++    @Override
++    // used for add/remove features and cleanup in ImsServiceController.
++    protected boolean isServiceControllerAvailable() {
++        return mImsServiceCompat != null;
++    }
++
++    @Override
++    protected MmTelInterfaceAdapter getInterface(int slotId) {
++        if (mImsServiceCompat == null) {
++            Log.w(TAG, "getInterface: IImsService returned null.");
++            return null;
++        }
++        return new ImsServiceInterfaceAdapter(slotId, mImsServiceCompat.asBinder());
++    }
++
++    @Override
++    protected void registerImsFeatureStatusCallback(int slotId, int featureType,
++            IImsFeatureStatusCallback c) throws RemoteException {
++	    
++	    c.notifyImsFeatureStatus(ImsFeature.STATE_READY);
++    }
++
++
++    @Override
++    protected void unregisterImsFeatureStatusCallback(int slotId, int featureType,
++            IImsFeatureStatusCallback c) {
++    }
++
++}
+diff --git a/src/java/com/android/internal/telephony/ims/ImsServiceInterfaceAdapter.java b/src/java/com/android/internal/telephony/ims/ImsServiceInterfaceAdapter.java
+new file mode 100644
+index 0000000..f554e6f
+--- /dev/null
++++ b/src/java/com/android/internal/telephony/ims/ImsServiceInterfaceAdapter.java
+@@ -0,0 +1,128 @@
++/*
++ * Copyright (C) 2018 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License
++ */
++
++package com.android.internal.telephony.ims;
++
++import android.app.PendingIntent;
++import android.os.IBinder;
++import android.os.Message;
++import android.os.RemoteException;
++import android.telephony.ims.ImsCallProfile;
++import android.telephony.ims.compat.feature.ImsFeature;
++
++import com.android.ims.internal.IImsCallSession;
++import com.android.ims.internal.IImsConfig;
++import com.android.ims.internal.IImsEcbm;
++import com.android.ims.internal.IImsMultiEndpoint;
++import com.android.ims.internal.IImsRegistrationListener;
++import com.android.ims.internal.IImsService;
++import com.android.ims.internal.IImsUt;
++
++/**
++ * Compatibility layer for IImsService implementations of IMS. Converts "generic" MMTel commands
++ * to implementation.
++ */
++
++public class ImsServiceInterfaceAdapter extends MmTelInterfaceAdapter {
++
++    private static final int SERVICE_ID = ImsFeature.MMTEL;
++
++    public ImsServiceInterfaceAdapter(int slotId, IBinder binder) {
++        super(slotId, binder);
++    }
++
++    public int startSession(PendingIntent incomingCallIntent, IImsRegistrationListener listener)
++            throws RemoteException {
++        return getInterface().open(mSlotId, ImsFeature.MMTEL, incomingCallIntent, listener);
++    }
++
++    public void endSession(int sessionId) throws RemoteException {
++        getInterface().close(sessionId);
++    }
++
++    public boolean isConnected(int callSessionType, int callType) throws RemoteException {
++        return getInterface().isConnected(SERVICE_ID, callSessionType, callType);
++    }
++
++    public boolean isOpened() throws RemoteException {
++        return getInterface().isOpened(SERVICE_ID);
++    }
++
++    public int getFeatureState() throws RemoteException {
++        return ImsFeature.STATE_READY;
++    }
++
++    public void addRegistrationListener(IImsRegistrationListener listener) throws RemoteException {
++        getInterface().addRegistrationListener(mSlotId, ImsFeature.MMTEL, listener);
++    }
++
++    public void removeRegistrationListener(IImsRegistrationListener listener)
++            throws RemoteException {
++        // Not Implemented in the old ImsService. If the registration listener becomes invalid, the
++        // ImsService will remove it.
++    }
++
++    public ImsCallProfile createCallProfile(int sessionId, int callSessionType, int callType)
++            throws RemoteException {
++        return getInterface().createCallProfile(sessionId, callSessionType, callType);
++    }
++
++    public IImsCallSession createCallSession(int sessionId, ImsCallProfile profile)
++            throws RemoteException {
++        return getInterface().createCallSession(sessionId, profile, null);
++    }
++
++    public IImsCallSession getPendingCallSession(int sessionId, String callId)
++            throws RemoteException {
++        return getInterface().getPendingCallSession(sessionId, callId);
++    }
++
++    public IImsUt getUtInterface() throws RemoteException {
++        return getInterface().getUtInterface(SERVICE_ID);
++    }
++
++    public IImsConfig getConfigInterface() throws RemoteException {
++        return getInterface().getConfigInterface(mSlotId);
++    }
++
++    public void turnOnIms() throws RemoteException {
++        getInterface().turnOnIms(mSlotId);
++    }
++
++    public void turnOffIms() throws RemoteException {
++        getInterface().turnOffIms(mSlotId);
++    }
++
++    public IImsEcbm getEcbmInterface() throws RemoteException {
++        return getInterface().getEcbmInterface(SERVICE_ID);
++    }
++
++    public void setUiTTYMode(int uiTtyMode, Message onComplete) throws RemoteException {
++        getInterface().setUiTTYMode(SERVICE_ID, uiTtyMode, onComplete);
++    }
++
++    public IImsMultiEndpoint getMultiEndpointInterface() throws RemoteException {
++        return getInterface().getMultiEndpointInterface(SERVICE_ID);
++    }
++
++    private IImsService getInterface() throws RemoteException {
++        IImsService feature = IImsService.Stub.asInterface(mBinder);
++        if (feature == null) {
++            throw new RemoteException("Binder not Available");
++        }
++        return feature;
++    }
++}
+-- 
+2.43.0
+

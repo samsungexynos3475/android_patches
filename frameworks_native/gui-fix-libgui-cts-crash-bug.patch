@@ -1,0 +1,35 @@
+From 7f5654fdfc93f0f3edcbc9f6a393c5187928c541 Mon Sep 17 00:00:00 2001
+From: tangcheng <tangcheng@xiaomi.com>
+Date: Thu, 7 Apr 2022 14:26:05 +0800
+Subject: [PATCH] gui: fix libgui cts crash bug
+
+While enabling #define LOG_NDEBUG 0, run camera cts test command:
+run cts -m CtsCameraTestCases -t android.hardware.camera2.cts.MultiViewTest#testSharedSurfaceImageReaderSwitch
+the libgui will crash due to nullptr, fix this by add nullptr
+judgement when pointing to the Graphicbuffer handle
+Bug: 228349805
+
+Signed-off-by: tangcheng <tangcheng@xiaomi.com>
+Change-Id: I69a84bdb5208b16df88f5f09f45c1a93ad2afe01
+Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
+---
+ libs/gui/BufferQueueProducer.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
+index e8e3f8e..3679cc7 100644
+--- a/libs/gui/BufferQueueProducer.cpp
++++ b/libs/gui/BufferQueueProducer.cpp
+@@ -607,7 +607,8 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
+     BQ_LOGV("dequeueBuffer: returning slot=%d/%" PRIu64 " buf=%p flags=%#x",
+             *outSlot,
+             mSlots[*outSlot].mFrameNumber,
+-            mSlots[*outSlot].mGraphicBuffer->handle, returnFlags);
++            mSlots[*outSlot].mGraphicBuffer != nullptr ?
++            mSlots[*outSlot].mGraphicBuffer->handle : nullptr, returnFlags);
+ 
+     if (outBufferAge) {
+         *outBufferAge = mCore->mBufferAge;
+-- 
+2.43.0
+

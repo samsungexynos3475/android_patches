@@ -1,0 +1,47 @@
+From ebfdfcbd257aed8c230452f3a7fc5e4e607b4a33 Mon Sep 17 00:00:00 2001
+From: Jessie Hao <juan.hao@nxp.com>
+Date: Fri, 2 Sep 2022 12:36:56 +0800
+Subject: [PATCH] ui: fix validateBufferDescriptorInfo error when usage
+ bits were 32-bits
+
+When usage bits were 32-bits, and the bit 31 is 1, will meet the below error:
+E Gralloc4: buffer descriptor contains invalid usage bits 0xffff00000000
+E GraphicBufferMapper: validateBufferSize(0xb400007adcd71320) failed: 1
+
+android_native_buffer_t define usage_deprecated as int.
+For example usage_deprecated is 0x80000000,
+uint64_t(0x80000000) will cast to 0xffffffff80000000, which leads to
+validateBufferDescriptorInfo fail.
+
+Add ANDROID_NATIVE_UNSIGNED_CAST(usage_deprecated) to fix this.
+
+Test:
+CtsMediaRecorderTestCases
+android.media.recorder.cts.MediaRecorderTest#testProfileAvcBaselineLevel1
+
+Bug: b/244620240
+Signed-off-by: Jessie Hao <juan.hao@nxp.com>
+Change-Id: I131b9dee3b2b768729218d8f7cabe0026ab89007
+(cherry picked from commit 5480b2129e55a9b00f789e9b1caa42656646634e)
+Signed-off-by: str-br <alexfinhart@gmail.com>
+Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
+---
+ libs/ui/GraphicBuffer.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
+index 3732fee..429760f 100644
+--- a/libs/ui/GraphicBuffer.cpp
++++ b/libs/ui/GraphicBuffer.cpp
+@@ -465,7 +465,7 @@ status_t GraphicBuffer::unflatten(void const*& buffer, size_t& size, int const*&
+         if (flattenWordCount == 13) {
+             usage = (uint64_t(buf[12]) << 32) | uint32_t(buf[6]);
+         } else {
+-            usage = uint64_t(usage_deprecated);
++            usage = uint64_t(ANDROID_NATIVE_UNSIGNED_CAST(usage_deprecated));
+         }
+         native_handle* h =
+                 native_handle_create(static_cast<int>(numFds), static_cast<int>(numInts));
+-- 
+2.43.0
+
