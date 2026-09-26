@@ -1,0 +1,32 @@
+From 0fd3695277235c5de5aa6dd49abce1ac5f4cf547 Mon Sep 17 00:00:00 2001
+From: Juhyung Park <qkrwngud825@gmail.com>
+Date: Mon, 23 May 2022 08:13:38 +0900
+Subject: [PATCH] surfaceflinger: Scheduler: vote max for
+ NOTIFICATION_SHADE
+
+We want the maximum refresh rate for pulling down the notification panel.
+
+Change-Id: I688f6f07089f1db9d39f2c33e89239480c0c782a
+Signed-off-by: Juhyung Park <qkrwngud825@gmail.com>
+Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
+---
+ services/surfaceflinger/Scheduler/Scheduler.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/services/surfaceflinger/Scheduler/Scheduler.cpp b/services/surfaceflinger/Scheduler/Scheduler.cpp
+index c49b925..a260428 100644
+--- a/services/surfaceflinger/Scheduler/Scheduler.cpp
++++ b/services/surfaceflinger/Scheduler/Scheduler.cpp
+@@ -514,6 +514,9 @@ void Scheduler::registerLayer(Layer* layer) {
+         windowType == WindowType::VOLUME_OVERLAY ||
+         windowType == WindowType::NAVIGATION_BAR_PANEL) {
+         voteType = scheduler::LayerHistory::LayerVoteType::NoVote;
++    } else if (windowType == WindowType::NOTIFICATION_SHADE) {
++        // Enforce max refresh rate for notification pulldown
++        voteType = scheduler::LayerHistory::LayerVoteType::Max;
+     } else if (windowType == WindowType::WALLPAPER) {
+         // Running Wallpaper at Min is considered as part of content detection.
+         voteType = scheduler::LayerHistory::LayerVoteType::Min;
+-- 
+2.43.0
+

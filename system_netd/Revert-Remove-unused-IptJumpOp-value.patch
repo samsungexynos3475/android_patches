@@ -1,0 +1,42 @@
+From 99e972b517dbccc4581f790a4a23b9378d12b34f Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Tue, 14 Dec 2021 12:00:18 +0100
+Subject: [PATCH] Revert "Remove unused IptJumpOp value"
+
+This reverts commit f265dddfffa7d355692bc43cb77d18555764646b.
+
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ server/BandwidthController.cpp | 2 ++
+ server/BandwidthController.h   | 2 +-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/server/BandwidthController.cpp b/server/BandwidthController.cpp
+index 12dbdd3..4e53f9e 100644
+--- a/server/BandwidthController.cpp
++++ b/server/BandwidthController.cpp
+@@ -779,6 +779,8 @@ inline const char *BandwidthController::jumpToString(IptJumpOp jumpHandling) {
+      * For port-unreachable (default), TCP should consider as an abort (RFC1122).
+      */
+     switch (jumpHandling) {
++    case IptJumpNoAdd:
++        return "";
+     case IptJumpReject:
+         return " -j REJECT";
+     case IptJumpReturn:
+diff --git a/server/BandwidthController.h b/server/BandwidthController.h
+index 2a3b4bd..401d42e 100644
+--- a/server/BandwidthController.h
++++ b/server/BandwidthController.h
+@@ -68,7 +68,7 @@ public:
+     static const char LOCAL_MANGLE_POSTROUTING[];
+     static const char LOCAL_GLOBAL_ALERT[];
+ 
+-    enum IptJumpOp { IptJumpReject, IptJumpReturn };
++    enum IptJumpOp { IptJumpReject, IptJumpReturn, IptJumpNoAdd };
+     enum IptOp { IptOpInsert, IptOpDelete };
+ 
+   private:
+-- 
+2.43.0
+

@@ -1,0 +1,42 @@
+From 7c6195e588b77a82c90191dc3d58fe8e811e0ddb Mon Sep 17 00:00:00 2001
+From: Juhyung Park <qkrwngud825@gmail.com>
+Date: Sun, 22 May 2022 05:07:51 +0900
+Subject: [PATCH] SurfaceFlinger: set
+ debug.sf.frame_rate_multiple_threshold to 60 by default
+
+If the device only have 60 and 120 Hz in the config group, 60 Hz won't be
+used when watching a 24 fps video and instead 120 Hz will be used because
+it is perfectly divisible by 24.
+
+This is a publicly documented AOSP behavior [1], but it simply does not
+make any practical sense and trades off significant amount of power for a
+very-hard-to-notice jitter-free experience.
+
+Set debug.sf.frame_rate_multiple_threshold to 60 by default to limit this
+behavior to 60 or lower fps.
+
+[1] https://source.android.com/devices/graphics/multiple-refresh-rate
+
+Change-Id: I66353abc46ad16e63b2c9188794469ad71f2192e
+Signed-off-by: Juhyung Park <qkrwngud825@gmail.com>
+Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 94794b6..98714f8 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -2846,7 +2846,7 @@ sp<DisplayDevice> SurfaceFlinger::setupNewDisplayDeviceInternal(
+         scheduler::RefreshRateConfigs::Config config =
+                 {.enableFrameRateOverride = android::sysprop::enable_frame_rate_override(false),
+                  .frameRateMultipleThreshold =
+-                         base::GetIntProperty("debug.sf.frame_rate_multiple_threshold", 0),
++                         base::GetIntProperty("debug.sf.frame_rate_multiple_threshold", 60),
+                  .idleTimerTimeout = idleTimerTimeoutMs,
+                  .kernelIdleTimerController = kernelIdleTimerController};
+         creationArgs.refreshRateConfigs =
+-- 
+2.43.0
+

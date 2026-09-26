@@ -1,0 +1,72 @@
+From b448d14b7d1d0e2a2b3fe6e29068402fbbe924be Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Tue, 29 Sep 2026 00:48:54 +0000
+Subject: [PATCH] Revert "config: Remove TARGET_HAS_MEMFD_BACKPORT"
+
+This reverts commit e020bffce2a1f5a0ba074cede2ce072221a5a6eb.
+
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ build/soong/Android.bp     | 17 +++++++++++++++++
+ config/BoardConfigSoong.mk |  6 ++++++
+ 2 files changed, 23 insertions(+)
+
+diff --git a/build/soong/Android.bp b/build/soong/Android.bp
+index f4c976e..bf2a4f1 100644
+--- a/build/soong/Android.bp
++++ b/build/soong/Android.bp
+@@ -276,6 +276,23 @@ needs_netd_direct_connect_rule {
+     },
+ }
+ 
++soong_config_module_type {
++    name: "has_memfd_backport",
++    module_type: "cc_defaults",
++    config_namespace: "lineageGlobalVars",
++    bool_variables: ["has_memfd_backport"],
++    properties: ["cppflags"],
++}
++
++has_memfd_backport {
++    name: "has_memfd_backport_defaults",
++    soong_config_variables: {
++        has_memfd_backport: {
++            cppflags: ["-DHAS_MEMFD_BACKPORT"],
++        },
++    },
++}
++
+ soong_config_module_type {
+     name: "egl_display_array",
+     module_type: "cc_defaults",
+diff --git a/config/BoardConfigSoong.mk b/config/BoardConfigSoong.mk
+index ed600d6..a247e85 100644
+--- a/config/BoardConfigSoong.mk
++++ b/config/BoardConfigSoong.mk
+@@ -32,8 +32,11 @@ SOONG_CONFIG_lineageGlobalVars += \
+     additional_gralloc_10_usage_bits \
+     bootloader_message_offset \
+     camera_override_format_from_reserved \
++    disable_postrender_cleanup \
+     gralloc_handle_has_custom_content_md_reserved_size \
+     gralloc_handle_has_reserved_size \
++    has_memfd_backport \
++    ignores_ftp_pptp_conntrack_failure \
+     needs_camera_boottime \
+     needs_netd_direct_connect_rule \
+     target_health_charging_control_charging_path \
+@@ -70,8 +73,11 @@ endif
+ 
+ # Soong bool variables
+ SOONG_CONFIG_lineageGlobalVars_camera_override_format_from_reserved := $(TARGET_CAMERA_OVERRIDE_FORMAT_FROM_RESERVED)
++SOONG_CONFIG_lineageGlobalVars_disable_postrender_cleanup := $(TARGET_DISABLE_POSTRENDER_CLEANUP)
+ SOONG_CONFIG_lineageGlobalVars_gralloc_handle_has_custom_content_md_reserved_size := $(TARGET_GRALLOC_HANDLE_HAS_CUSTOM_CONTENT_MD_RESERVED_SIZE)
+ SOONG_CONFIG_lineageGlobalVars_gralloc_handle_has_reserved_size := $(TARGET_GRALLOC_HANDLE_HAS_RESERVED_SIZE)
++SOONG_CONFIG_lineageGlobalVars_has_memfd_backport := $(TARGET_HAS_MEMFD_BACKPORT)
++SOONG_CONFIG_lineageGlobalVars_ignores_ftp_pptp_conntrack_failure := $(TARGET_IGNORES_FTP_PPTP_CONNTRACK_FAILURE)
+ SOONG_CONFIG_lineageGlobalVars_needs_camera_boottime := $(TARGET_CAMERA_BOOTTIME_TIMESTAMP)
+ SOONG_CONFIG_lineageGlobalVars_needs_netd_direct_connect_rule := $(TARGET_NEEDS_NETD_DIRECT_CONNECT_RULE)
+ SOONG_CONFIG_lineageGlobalVars_uses_egl_display_array := $(TARGET_USES_EGL_DISPLAY_ARRAY)
+-- 
+2.43.0
+

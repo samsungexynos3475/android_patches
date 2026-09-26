@@ -1,0 +1,65 @@
+From 348825a17c53feff3d74b3a1bbca32c7e30ebfcc Mon Sep 17 00:00:00 2001
+From: lavenly <135024283+lavenly@users.noreply.github.com>
+Date: Tue, 29 Sep 2026 00:48:15 +0000
+Subject: [PATCH] Revert "config: Remove
+ TARGET_NEEDS_NETD_DIRECT_CONNECT_RULE"
+
+This reverts commit 3bff07a50650798c40519dc84fa6eb78e23ba8c3.
+
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ build/soong/Android.bp     | 17 +++++++++++++++++
+ config/BoardConfigSoong.mk |  2 ++
+ 2 files changed, 19 insertions(+)
+
+diff --git a/build/soong/Android.bp b/build/soong/Android.bp
+index 7bd338c..f4c976e 100644
+--- a/build/soong/Android.bp
++++ b/build/soong/Android.bp
+@@ -259,6 +259,23 @@ needs_camera_boottime {
+     },
+ }
+ 
++soong_config_module_type {
++    name: "needs_netd_direct_connect_rule",
++    module_type: "cc_defaults",
++    config_namespace: "lineageGlobalVars",
++    bool_variables: ["needs_netd_direct_connect_rule"],
++    properties: ["cppflags"],
++}
++
++needs_netd_direct_connect_rule {
++    name: "needs_netd_direct_connect_rule_defaults",
++    soong_config_variables: {
++        needs_netd_direct_connect_rule: {
++            cppflags: ["-DNEEDS_NETD_DIRECT_CONNECT_RULE"],
++        },
++    },
++}
++
+ soong_config_module_type {
+     name: "egl_display_array",
+     module_type: "cc_defaults",
+diff --git a/config/BoardConfigSoong.mk b/config/BoardConfigSoong.mk
+index 901190b..ed600d6 100644
+--- a/config/BoardConfigSoong.mk
++++ b/config/BoardConfigSoong.mk
+@@ -35,6 +35,7 @@ SOONG_CONFIG_lineageGlobalVars += \
+     gralloc_handle_has_custom_content_md_reserved_size \
+     gralloc_handle_has_reserved_size \
+     needs_camera_boottime \
++    needs_netd_direct_connect_rule \
+     target_health_charging_control_charging_path \
+     target_health_charging_control_charging_enabled \
+     target_health_charging_control_charging_disabled \
+@@ -72,6 +73,7 @@ SOONG_CONFIG_lineageGlobalVars_camera_override_format_from_reserved := $(TARGET_
+ SOONG_CONFIG_lineageGlobalVars_gralloc_handle_has_custom_content_md_reserved_size := $(TARGET_GRALLOC_HANDLE_HAS_CUSTOM_CONTENT_MD_RESERVED_SIZE)
+ SOONG_CONFIG_lineageGlobalVars_gralloc_handle_has_reserved_size := $(TARGET_GRALLOC_HANDLE_HAS_RESERVED_SIZE)
+ SOONG_CONFIG_lineageGlobalVars_needs_camera_boottime := $(TARGET_CAMERA_BOOTTIME_TIMESTAMP)
++SOONG_CONFIG_lineageGlobalVars_needs_netd_direct_connect_rule := $(TARGET_NEEDS_NETD_DIRECT_CONNECT_RULE)
+ SOONG_CONFIG_lineageGlobalVars_uses_egl_display_array := $(TARGET_USES_EGL_DISPLAY_ARRAY)
+ SOONG_CONFIG_lineageNvidiaVars_uses_nvidia_enhancements := $(NV_ANDROID_FRAMEWORK_ENHANCEMENTS)
+ SOONG_CONFIG_lineageQcomVars_qti_vibrator_use_effect_stream := $(TARGET_QTI_VIBRATOR_USE_EFFECT_STREAM)
+-- 
+2.43.0
+

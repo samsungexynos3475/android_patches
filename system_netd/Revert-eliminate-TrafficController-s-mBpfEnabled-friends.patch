@@ -1,0 +1,81 @@
+From 2f45e03fb0028e082d74a47610d7dc4ab4cf8195 Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Thu, 25 Nov 2021 21:28:54 +0100
+Subject: [PATCH] Revert "eliminate TrafficController's mBpfEnabled &
+ friends" and disabled the firewall
+
+This reverts commit ec36c89c5e6cc6beb7b8ca65e23c824e04a85cdc.
+
+Change-Id: I4d4306f4fb91d1214b33607f07922b57a6ae1555
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ server/FirewallController.cpp | 26 ++++++++++++++++++++++++--
+ server/FirewallController.h   |  1 +
+ 2 files changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/server/FirewallController.cpp b/server/FirewallController.cpp
+index b3c6b02..16f0c83 100644
+--- a/server/FirewallController.cpp
++++ b/server/FirewallController.cpp
+@@ -40,6 +40,14 @@ using android::base::Join;
+ using android::base::StringAppendF;
+ using android::base::StringPrintf;
+ 
++namespace {
++
++bool getBpfOwnerStatus() {
++    return 0;
++}
++
++}  // namespace
++
+ namespace android {
+ namespace net {
+ 
+@@ -70,7 +78,12 @@ FirewallController::FirewallController(void) {
+ }
+ 
+ int FirewallController::setupIptablesHooks(void) {
+-    return flushRules();
++    int res = 0;
++    mUseBpfOwnerMatch = getBpfOwnerStatus();
++    if (mUseBpfOwnerMatch) {
++        return res;
++    }
++    return res;
+ }
+ 
+ int FirewallController::setFirewallType(FirewallType ftype) {
+@@ -111,7 +124,16 @@ int FirewallController::flushRules() {
+ int FirewallController::resetFirewall(void) {
+     mFirewallType = ALLOWLIST;
+     mIfaceRules.clear();
+-    return flushRules();
++
++    // flush any existing rules
++    std::string command =
++        "*filter\n"
++        ":fw_INPUT -\n"
++        ":fw_OUTPUT -\n"
++        ":fw_FORWARD -\n"
++        "COMMIT\n";
++
++    return (execIptablesRestore(V4V6, command.c_str()) == 0) ? 0 : -EREMOTEIO;
+ }
+ 
+ int FirewallController::isFirewallEnabled(void) {
+diff --git a/server/FirewallController.h b/server/FirewallController.h
+index 6d6f48f..0244af9 100644
+--- a/server/FirewallController.h
++++ b/server/FirewallController.h
+@@ -72,6 +72,7 @@ protected:
+ 
+ private:
+   FirewallType mFirewallType;
++  bool mUseBpfOwnerMatch;
+   std::set<std::string> mIfaceRules;
+   int flushRules(void);
+ };
+-- 
+2.43.0
+

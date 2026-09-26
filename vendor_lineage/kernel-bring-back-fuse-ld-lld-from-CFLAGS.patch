@@ -1,0 +1,28 @@
+From cf0f4b50a3bdad4f30f2d6ddfa36dc86e4766e73 Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Fri, 4 Nov 2022 21:20:37 +0100
+Subject: [PATCH] kernel: bring back -fuse-ld=lld from CFLAGS
+
+This has been removed in 9ec1fed.
+
+Change-Id: I9cf004bf1da8d86ea6e7c6769cbf000ee3cb5a23
+Signed-off-by: Dominggoes Isakh <drjisakh@gmail.com>
+---
+ config/BoardConfigKernel.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/config/BoardConfigKernel.mk b/config/BoardConfigKernel.mk
+index 4c2a268..55ba830 100644
+--- a/config/BoardConfigKernel.mk
++++ b/config/BoardConfigKernel.mk
+@@ -165,6 +165,7 @@ ifneq ($(KERNEL_NO_GCC), true)
+     endif
+ 
+     KERNEL_MAKE_FLAGS += CPATH="/usr/include:/usr/include/x86_64-linux-gnu" HOSTLDFLAGS="-L/usr/lib/x86_64-linux-gnu -L/usr/lib64 -fuse-ld=lld"
++    KERNEL_MAKE_FLAGS += HOSTCFLAGS="-fuse-ld=lld"
+ 
+     ifeq ($(KERNEL_ARCH),arm64)
+         # Add 32-bit GCC to PATH so that arm-linux-androidkernel-as is available for CONFIG_COMPAT_VDSO
+-- 
+2.43.0
+

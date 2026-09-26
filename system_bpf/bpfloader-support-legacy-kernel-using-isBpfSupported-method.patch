@@ -1,0 +1,49 @@
+From 3754e78384689cf5f67e12632e902e869a2cb6be Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Mon, 1 Nov 2021 21:22:06 +0100
+Subject: [PATCH] bpfloader: support legacy kernel using isBpfSupported method
+
+Change-Id: I106eac65098c66ac5575c88f107104aa70e77cac
+Signed-off-by: lavenly <135024283+lavenly@users.noreply.github.com>
+---
+ bpfloader/BpfLoader.cpp | 24 ++++++++++++++----------
+ 1 file changed, 14 insertions(+), 10 deletions(-)
+
+diff --git a/bpfloader/BpfLoader.cpp b/bpfloader/BpfLoader.cpp
+index bc72811..1ba14dd 100644
+--- a/bpfloader/BpfLoader.cpp
++++ b/bpfloader/BpfLoader.cpp
+@@ -186,16 +186,20 @@ int main(int argc, char** argv) {
+         createSysFsBpfSubDir(location.prefix);
+     }
+ 
+-    // Load all ELF objects, create programs and maps, and pin them
+-    for (const auto& location : locations) {
+-        if (loadAllElfObjects(location) != 0) {
+-            ALOGE("=== CRITICAL FAILURE LOADING BPF PROGRAMS FROM %s ===", location.dir);
+-            ALOGE("If this triggers reliably, you're probably missing kernel options or patches.");
+-            ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+-                  "problems or startup script race.");
+-            ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+-            sleep(20);
+-            return 2;
++    bool ebpf_supported = android::bpf::isBpfSupported();
++
++    if (ebpf_supported) {
++        // Load all ELF objects, create programs and maps, and pin them
++        for (const auto& location : locations) {
++            if (loadAllElfObjects(location) != 0) {
++                ALOGE("=== CRITICAL FAILURE LOADING BPF PROGRAMS FROM %s ===", location.dir);
++                ALOGE("If this triggers reliably, you're probably missing kernel options or patches.");
++                ALOGE("If this triggers randomly, you might be hitting some memory allocation "
++                      "problems or startup script race.");
++                ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
++                sleep(20);
++                return 2;
++            }
+         }
+     }
+ 
+-- 
+2.43.0
+
