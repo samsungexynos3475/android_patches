@@ -40,6 +40,7 @@ When you provide the `--keys` argument, the script will securely clone your priv
 The unified script supports additional options:
 - `-v, --version <version>`: Specify the LineageOS version (e.g. `19.1`).
 - `-b, --branch <branch>`: Directly specify a remote branch to download the patch payload from (e.g. `lineage-19.1`).
+- `-d, --dir <dir>`: Specify a local directory containing patches and `apply.sh` to apply locally without downloading from GitHub.
 - `-p, --patches <file>`: Specify a custom payload script to use instead of the default `apply.sh`.
 - `--repo <repo_name>`: Specify a custom remote repository to fetch the patches from (e.g. `releases`).
 - `--keys <dir_or_url>`: Securely fetch private release keys from a local directory or a private Git repository (SSH or HTTPS).

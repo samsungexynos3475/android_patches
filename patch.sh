@@ -131,6 +131,9 @@ apply() {
                 rm -f "$temp_patch"
                 abort_and_undo
             fi
+        elif [ -f "$patch" ]; then
+            # Direct local file path exists (relative or absolute)
+            cp "$patch" "$temp_patch"
         elif [[ "$PATCH_BASE" == http* ]]; then
             # Remote payload (append to PATCH_BASE)
             local patch_url="$PATCH_BASE/$patch"
@@ -439,6 +442,7 @@ print_usage() {
     echo -e "Options:"
     echo -e "  -v, --version <version>  Specify LineageOS version (e.g., 17.1)"
     echo -e "  -b, --branch <branch>    Specify full branch name (e.g., lineage-17.1)"
+    echo -e "  -d, --dir <dir>          Specify local directory of patches to apply"
     echo -e "  -p, --patches <file>     Specify custom payload script (default: apply.sh)"
     echo -e "  --repo <name>            Specify custom GitHub repository name"
     echo -e "  --keys <url_or_dir>      Clone or copy private signing keys"
@@ -474,12 +478,17 @@ KEYS_ARG=""
 UPDATE_MODE=0
 LOG_FILE_SET=""
 LOG_FILE=""
+LOCAL_DIR=""
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
         -h|--help)
             print_usage
             exit 0
+            ;;
+        -d|--dir|--local)
+            LOCAL_DIR="$2"
+            shift 2
             ;;
         -v|--version)
             VERSION="$2"
@@ -575,13 +584,58 @@ if [ "$UPDATE_MODE" -eq 1 ]; then
     fi
 fi
 
+# Determine execution mode and resolve local vs sibling vs remote
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# If -p points to an existing file on disk, auto-derive LOCAL_DIR and PAYLOAD_SCRIPT
+if [ -z "$LOCAL_DIR" ] && [ -f "${PAYLOAD_SCRIPT/#\~/$HOME}" ]; then
+    expanded_payload="${PAYLOAD_SCRIPT/#\~/$HOME}"
+    LOCAL_DIR="$(cd "$(dirname "$expanded_payload")" 2>/dev/null && pwd)"
+    PAYLOAD_SCRIPT="$(basename "$expanded_payload")"
+fi
+
+if [ -n "$LOCAL_DIR" ]; then
+    LOCAL_DIR="${LOCAL_DIR/#\~/$HOME}"
+    LOCAL_DIR="$(cd "$LOCAL_DIR" 2>/dev/null && pwd || echo "$LOCAL_DIR")"
+    if [ ! -d "$LOCAL_DIR" ]; then
+        echo -e "${RED}❌ Error: Local directory does not exist: $LOCAL_DIR${NC}"
+        exit 1
+    fi
+    if [ ! -f "$LOCAL_DIR/$PAYLOAD_SCRIPT" ]; then
+        echo -e "${RED}❌ Error: Payload script $PAYLOAD_SCRIPT not found in $LOCAL_DIR${NC}"
+        exit 1
+    fi
+    if [ -z "$BRANCH" ] && [ -z "$VERSION" ] && [ -d "$LOCAL_DIR/.git" ]; then
+        BRANCH=$(git -C "$LOCAL_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null)
+    fi
+    if [ -d "$LOCAL_DIR/.git" ] && [ -n "$BRANCH" ]; then
+        local_cur_branch=$(git -C "$LOCAL_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null)
+        if [ -n "$local_cur_branch" ] && [ "$local_cur_branch" != "$BRANCH" ]; then
+            if git -C "$LOCAL_DIR" rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
+                echo -e "   ${YELLOW}🔄 Switching local repository $LOCAL_DIR to branch $BRANCH...${NC}"
+                if ! git -C "$LOCAL_DIR" checkout "$BRANCH" >/dev/null 2>&1; then
+                    echo -e "${RED}❌ Could not switch branch in $LOCAL_DIR. Please check for uncommitted changes.${NC}"
+                    exit 1
+                fi
+            else
+                echo -e "${YELLOW}⚠️ Notice: Branch '$BRANCH' not found in $LOCAL_DIR (currently on '$local_cur_branch').${NC}"
+            fi
+        fi
+    fi
+fi
+
 if [ -z "$BRANCH" ] && [ -n "$VERSION" ]; then
     BRANCH="lineage-$VERSION"
 fi
 
 if [ -z "$BRANCH" ]; then
-    echo -e "${RED}❌ Please specify a version with -v or branch with -b.${NC}"
-    exit 1
+    if [ -n "$LOCAL_DIR" ]; then
+        BRANCH="local"
+    else
+        echo -e "${RED}❌ Please specify a version with -v or branch with -b.${NC}"
+        exit 1
+    fi
 fi
 
 check_env
@@ -590,10 +644,33 @@ separator
 echo -e "${GREEN}✅ LineageOS build system found. Starting to patch now!${NC}"
 separator
 
-# Determine if we are running from a local clone of android_patches or from curl
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -d "$SCRIPT_DIR/.git" ] && [ -f "$SCRIPT_DIR/$PAYLOAD_SCRIPT" ]; then
-    # Local execution
+# Determine if we are running from an explicit local directory, local sibling repo, local clone, or curl
+if [ -n "$LOCAL_DIR" ]; then
+    # Explicit local directory (-d / --dir / -p /path/to/file)
+    echo -e "   ${BLUE}📂 Sourcing local $PAYLOAD_SCRIPT from $LOCAL_DIR...${NC}"
+    PATCH_BASE="$LOCAL_DIR"
+    source "$LOCAL_DIR/$PAYLOAD_SCRIPT"
+elif [ -d "$PARENT_DIR/$REPO_NAME/.git" ] && [ -f "$PARENT_DIR/$REPO_NAME/$PAYLOAD_SCRIPT" ] && [ "$REPO_NAME" != "android_patches" ]; then
+    # Sibling local repository exists (e.g. releases)
+    sibling_dir="$PARENT_DIR/$REPO_NAME"
+    sibling_branch=$(git -C "$sibling_dir" rev-parse --abbrev-ref HEAD 2>/dev/null)
+    if [ "$sibling_branch" != "$BRANCH" ] && [ -n "$BRANCH" ] && git -C "$sibling_dir" rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
+        echo -e "   ${YELLOW}🔄 Switching sibling repository $sibling_dir to branch $BRANCH...${NC}"
+        git -C "$sibling_dir" checkout "$BRANCH" >/dev/null 2>&1 || true
+        sibling_branch=$(git -C "$sibling_dir" rev-parse --abbrev-ref HEAD 2>/dev/null)
+    fi
+    if [ "$sibling_branch" == "$BRANCH" ] || [ -z "$BRANCH" ]; then
+        echo -e "   ${BLUE}🌐 Sourcing local $PAYLOAD_SCRIPT from $sibling_dir ($sibling_branch)...${NC}"
+        PATCH_BASE="$sibling_dir"
+        [ -z "$BRANCH" ] && BRANCH="$sibling_branch"
+        source "$sibling_dir/$PAYLOAD_SCRIPT"
+    else
+        echo -e "   ${YELLOW}⚠️ Local branch ($sibling_branch) in $sibling_dir does not match requested branch ($BRANCH). Fetching remote payload...${NC}"
+        PATCH_BASE="https://raw.githubusercontent.com/samsungexynos3475/$REPO_NAME/refs/heads/$BRANCH"
+        source <(curl -sf "$PATCH_BASE/$PAYLOAD_SCRIPT?t=$(date +%s)")
+    fi
+elif [ -d "$SCRIPT_DIR/.git" ] && [ -f "$SCRIPT_DIR/$PAYLOAD_SCRIPT" ]; then
+    # Local clone of android_patches
     local_branch=$(git -C "$SCRIPT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null)
     if [ "$local_branch" == "$BRANCH" ]; then
         echo -e "   ${BLUE}🌐 Sourcing local $PAYLOAD_SCRIPT for $BRANCH...${NC}"
